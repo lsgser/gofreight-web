@@ -52,6 +52,7 @@ export const docSections: NavSection[] = [
     title: 'Prologue',
     items: [
       { slug: 'getting-started', title: 'Getting Started', description: 'Install the CLI and create your first app' },
+      { slug: 'changelog', title: 'Changelog', description: 'Release history from v0.1.0 onward' },
       { slug: 'project-structure', title: 'Project Structure', description: 'Framework vs application layout' },
       { slug: 'configuration', title: 'Configuration', description: 'Environment variables and YAML config' },
     ],

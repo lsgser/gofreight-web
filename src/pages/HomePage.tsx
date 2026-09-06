@@ -135,7 +135,7 @@ export function HomePage() {
             <p>Install the CLI, scaffold your first resource, and run the dev server in minutes.</p>
           </div>
           <Link to="/docs/tutorial-first-app" className="btn btn-light">
-            Start building →
+            <span className="text-white">Start building →</span>
           </Link>
         </div>
       </section>

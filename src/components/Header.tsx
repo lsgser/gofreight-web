@@ -38,7 +38,7 @@ export function Header() {
         <div className="header-actions">
           <DocSearch compact />
           <ThemeToggle />
-          <span className="version-badge">v0.1.0</span>
+          <span className="version-badge">v0.2.0</span>
           <Link to="/docs/getting-started" className="btn btn-primary btn-sm">
             Get Started
           </Link>
