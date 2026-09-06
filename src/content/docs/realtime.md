@@ -189,4 +189,4 @@ Run `gofreight serve` inside `demoapp/` and connect with the TypeScript client.
 ## See also
 
 - [Features — real-time](features.md#11-real-time-websockets)
-- [Tutorial: Real-time chat](../../gofreight-web) (docs site)
+- [Tutorial: Real-time chat](https://github.com/lsgser/gofreight-web/blob/main/src/content/docs/tutorial-realtime.md)

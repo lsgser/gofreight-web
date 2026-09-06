@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { searchDocs, type DocSearchResult } from '../lib/docSearch'
+import { searchShortcutLabel } from '../lib/platform'
 
 type Props = {
   compact?: boolean
@@ -16,6 +17,7 @@ export function DocSearch({ compact = false }: Props) {
   const [results, setResults] = useState<DocSearchResult[]>([])
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
+  const shortcut = searchShortcutLabel()
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -103,7 +105,7 @@ export function DocSearch({ compact = false }: Props) {
           aria-autocomplete="list"
           autoComplete="off"
         />
-        {!compact && <kbd className="doc-search-kbd">⌘K</kbd>}
+        {!compact && <kbd className="doc-search-kbd">{shortcut}</kbd>}
       </div>
 
       {open && query.trim() && (

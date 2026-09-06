@@ -25,6 +25,11 @@ export const features = [
     icon: '⛨',
   },
   {
+    title: 'GraphQL',
+    description: 'Modular GraphQL with DataLoader, GraphiQL playground, depth and rate limits.',
+    icon: '◈',
+  },
+  {
     title: 'Real-time WebSockets',
     description: 'Socket.io-style rooms and events with a TypeScript client — live chat and broadcasts.',
     icon: '⚡',
