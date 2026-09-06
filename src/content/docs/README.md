@@ -48,7 +48,7 @@
 | [Services & Container](services.md) | Business logic and dependency injection |
 | [API Resources](api-resources.md) | JSON serializers for API responses |
 | [Real-time WebSockets](realtime.md) | Rooms, events, TypeScript client |
-| [GraphQL](graphql.md) | Modular schema, DataLoader, playground, security |
+| [GraphQL](graphql.md) | SDL schemas, modules, DataLoader, playground |
 
 ## Advanced
 
@@ -57,7 +57,7 @@
 | [Features overview](features.md) | Index of all framework capabilities |
 | [Security](security.md) | CSRF, headers, rate limiting, production |
 | [Testing](testing.md) | HTTP tests with `gftest` |
-| [Date & time](datetime.md) | Carbon-style helpers via `support/datetime` |
+| [Date & time](datetime.md) | Fluent date helpers via `support/datetime` |
 | [Integrations](integrations.md) | Pluggable mail, storage, cache, and custom APIs |
 | [Extending Gofreight](extending.md) | Custom integrations, events, plugins |
 | [Admin Dashboard](admin.md) | Local database admin (development only) |
@@ -74,6 +74,7 @@
 | [HTML CRUD with GFT](tutorial-html-crud.md) | Templates, forms, validation, and flash errors |
 | [JWT Authentication](tutorial-auth-jwt.md) | Login endpoints and protected API routes |
 | [Real-time WebSockets](tutorial-realtime.md) | Live chat with socket.io-style events |
+| [GraphQL API](tutorial-graphql.md) | SDL schemas, resolvers, DataLoader, playground |
 
 ## Quick links
 

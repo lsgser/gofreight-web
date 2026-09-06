@@ -135,7 +135,7 @@ When validation fails, errors and old input are flashed to the session and shown
 - Field errors under each input (`{{ error "field" }}`)
 - Old input repopulated (`{{ field "title" .Old.Title "text" }}`)
 
-This mirrors the Laravel/Rails developer experience while staying idiomatic Go.
+Validation errors and old input are preserved across redirects — idiomatic Go with a smooth form UX.
 
 ## Step 6 — Flash messages
 

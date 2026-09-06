@@ -49,8 +49,8 @@ export function HomePage() {
           <div className="section-header">
             <h2>Go-first. Productive by design.</h2>
             <p>
-              Like Laravel and Rails, Gofreight favors convention over configuration — but stays
-              idiomatic Go with stdlib HTTP, explicit wiring, and no facades.
+              Gofreight favors convention over configuration — predictable folders, generators,
+              and a full web stack — while staying idiomatic Go with stdlib HTTP and explicit wiring.
             </p>
           </div>
           <ul className="philosophy-list">

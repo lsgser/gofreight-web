@@ -38,6 +38,11 @@ export const tutorialSections: NavSection[] = [
         title: 'Real-time WebSockets',
         description: 'Live chat with socket.io-style events and rooms',
       },
+      {
+        slug: 'tutorial-graphql',
+        title: 'GraphQL API',
+        description: 'SDL schemas, resolvers, DataLoader, and the playground',
+      },
     ],
   },
 ]
@@ -75,7 +80,7 @@ export const docSections: NavSection[] = [
       { slug: 'services', title: 'Services & Container', description: 'Business logic and dependency injection' },
       { slug: 'api-resources', title: 'API Resources', description: 'JSON serializers for API responses' },
       { slug: 'realtime', title: 'Real-time WebSockets', description: 'Rooms, events, and the TypeScript client' },
-      { slug: 'graphql', title: 'GraphQL', description: 'Modular schema, DataLoader, playground, security' },
+      { slug: 'graphql', title: 'GraphQL', description: 'SDL schemas, modules, DataLoader, playground' },
     ],
   },
   {
@@ -84,7 +89,7 @@ export const docSections: NavSection[] = [
       { slug: 'features', title: 'Features Overview', description: 'Index of all framework capabilities' },
       { slug: 'security', title: 'Security', description: 'CSRF, headers, rate limiting, production' },
       { slug: 'testing', title: 'Testing', description: 'gftest and factories' },
-      { slug: 'datetime', title: 'Date & Time', description: 'Carbon-style helpers' },
+      { slug: 'datetime', title: 'Date & Time', description: 'Fluent date helpers' },
       { slug: 'integrations', title: 'Integrations', description: 'Mail, storage, cache drivers' },
       { slug: 'extending', title: 'Extending', description: 'Custom integrations and events' },
       { slug: 'admin', title: 'Admin Dashboard', description: 'Development database admin' },
