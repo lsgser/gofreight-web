@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { assetUrl } from '../lib/assets'
+import { resolveImageSrc } from '../lib/assets'
 
 type Props = {
   content: string
@@ -11,15 +11,11 @@ function normalizeDocContent(content: string): string {
   return content
     .replace(
       /<p align="center">\s*<img src="(?:assets\/)?([^"]+)"[^>]*>\s*<\/p>\n*/g,
-      (_, src: string) => {
-        const file = src.replace(/^assets\//, '')
-        return `\n\n![Gofreight](${assetUrl(file)})\n\n`
-      },
+      (_, src: string) => `\n\n![Gofreight](${src.replace(/^assets\//, '')})\n\n`,
     )
     .replace(/<h1 align="center">([\s\S]*?)<\/h1>\n*/g, '# $1\n\n')
     .replace(/<p align="center">\s*([\s\S]*?)\s*<\/p>\n*/g, (_, inner: string) => `${inner.trim()}\n\n`)
-    .replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g, (_, file: string) => `![Gofreight](${assetUrl(file)})`)
-    .replace(/!\[[^\]]*\]\(\/([^)]+)\)/g, (_, file: string) => `![Gofreight](${assetUrl(file)})`)
+    .replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g, '![Gofreight]($1)')
     .replace(/\]\(\.\.\/README\.md\)/g, '](https://github.com/lsgser/gofreight)')
     .replace(/\]\(([^)]+\.md)\)/g, (_, path: string) => {
       const name = path.replace(/^.*\//, '').replace('.md', '')
@@ -42,10 +38,7 @@ export function MarkdownRenderer({ content }: Props) {
         img: ({ src, alt }) => {
           const isBrand = !brandShown.current
           brandShown.current = true
-          const resolvedSrc =
-            typeof src === 'string' && src.startsWith('/')
-              ? assetUrl(src.slice(1))
-              : src
+          const resolvedSrc = resolveImageSrc(src)
           const isLogo = typeof resolvedSrc === 'string' && resolvedSrc.includes('logo')
           const className = isBrand
             ? isLogo
