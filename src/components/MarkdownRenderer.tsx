@@ -40,11 +40,17 @@ export function MarkdownRenderer({ content }: Props) {
         img: ({ src, alt }) => {
           const isBrand = !brandShown.current
           brandShown.current = true
+          const isLogo = typeof src === 'string' && src.includes('logo')
+          const className = isBrand
+            ? isLogo
+              ? 'doc-brand-logo'
+              : 'doc-brand-icon'
+            : 'doc-inline-img'
           return (
             <img
               src={src}
               alt={alt ?? 'Gofreight'}
-              className={isBrand ? 'doc-brand-img' : 'doc-inline-img'}
+              className={className}
               loading="lazy"
             />
           )

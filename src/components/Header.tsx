@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { DocSearch } from './DocSearch'
 import { ThemeToggle } from './ThemeToggle'
 
 export function Header() {
@@ -35,6 +36,7 @@ export function Header() {
         </nav>
 
         <div className="header-actions">
+          <DocSearch compact />
           <ThemeToggle />
           <span className="version-badge">v0.1.0</span>
           <Link to="/docs/getting-started" className="btn btn-primary btn-sm">

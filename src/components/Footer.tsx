@@ -21,6 +21,7 @@ export function Footer() {
             <li><Link to="/docs/tutorial-rest-api">Build a REST API</Link></li>
             <li><Link to="/docs/tutorial-html-crud">HTML CRUD with GFT</Link></li>
             <li><Link to="/docs/tutorial-auth-jwt">JWT Authentication</Link></li>
+            <li><Link to="/docs/tutorial-realtime">Real-time WebSockets</Link></li>
           </ul>
         </div>
 
@@ -29,6 +30,7 @@ export function Footer() {
           <ul>
             <li><Link to="/docs/getting-started">Getting Started</Link></li>
             <li><Link to="/docs/routing">Routing</Link></li>
+            <li><Link to="/docs/realtime">Real-time</Link></li>
             <li><Link to="/docs/templating">Templating</Link></li>
             <li><Link to="/docs/security">Security</Link></li>
           </ul>

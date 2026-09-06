@@ -25,6 +25,11 @@ export const features = [
     icon: '⛨',
   },
   {
+    title: 'Real-time WebSockets',
+    description: 'Socket.io-style rooms and events with a TypeScript client — live chat and broadcasts.',
+    icon: '⚡',
+  },
+  {
     title: 'Single Binary',
     description: 'Compile your entire web application — server, templates, assets — into one Go binary.',
     icon: '▣',

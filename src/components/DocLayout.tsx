@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
+import { DocSearch } from './DocSearch'
 import { allNavSections, docTitle, isTutorialSlug } from '../data/navigation'
 
 export function DocLayout() {
@@ -8,6 +9,7 @@ export function DocLayout() {
     <div className="docs-shell">
       <aside className="docs-sidebar">
         <div className="docs-sidebar-inner">
+          <DocSearch />
           <p className="docs-sidebar-label">Documentation</p>
           {allNavSections.map((section) => (
             <div key={section.title} className="docs-nav-section">

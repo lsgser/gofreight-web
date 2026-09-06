@@ -33,6 +33,11 @@ export const tutorialSections: NavSection[] = [
         title: 'JWT Authentication',
         description: 'Login endpoints and protected API routes',
       },
+      {
+        slug: 'tutorial-realtime',
+        title: 'Real-time WebSockets',
+        description: 'Live chat with socket.io-style events and rooms',
+      },
     ],
   },
 ]
@@ -49,6 +54,7 @@ export const docSections: NavSection[] = [
     title: 'The Basics',
     items: [
       { slug: 'routing', title: 'Routing', description: 'Route groups, resources, middleware' },
+      { slug: 'realtime', title: 'Real-time WebSockets', description: 'Rooms, events, and the TypeScript client' },
       { slug: 'templating', title: 'Templating (GFT)', description: 'Gofreight Templates syntax' },
       { slug: 'forms-validation', title: 'Forms & Validation', description: 'Vine schemas and form components' },
       { slug: 'commands', title: 'CLI Commands', description: 'Full gofreight command reference' },

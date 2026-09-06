@@ -14,3 +14,7 @@ export function getAllDocSlugs(): string[] {
     return match?.[1] ?? ''
   }).filter(Boolean)
 }
+
+export function getRawDocContent(slug: string): string | undefined {
+  return getDocContent(slug)
+}
