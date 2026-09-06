@@ -1,13 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DocLayout } from './components/DocLayout'
 import { Layout } from './components/Layout'
+import { routerBasename } from './lib/assets'
 import { DocPage } from './pages/DocPage'
 import { DocsIndexPage } from './pages/DocsIndexPage'
 import { HomePage } from './pages/HomePage'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />

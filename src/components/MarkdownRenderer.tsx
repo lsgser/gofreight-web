@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { assetUrl } from '../lib/assets'
 
 type Props = {
   content: string
@@ -12,12 +13,13 @@ function normalizeDocContent(content: string): string {
       /<p align="center">\s*<img src="(?:assets\/)?([^"]+)"[^>]*>\s*<\/p>\n*/g,
       (_, src: string) => {
         const file = src.replace(/^assets\//, '')
-        return `\n\n![Gofreight](/${file})\n\n`
+        return `\n\n![Gofreight](${assetUrl(file)})\n\n`
       },
     )
     .replace(/<h1 align="center">([\s\S]*?)<\/h1>\n*/g, '# $1\n\n')
     .replace(/<p align="center">\s*([\s\S]*?)\s*<\/p>\n*/g, (_, inner: string) => `${inner.trim()}\n\n`)
-    .replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g, '![Gofreight](/$1)')
+    .replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g, (_, file: string) => `![Gofreight](${assetUrl(file)})`)
+    .replace(/!\[[^\]]*\]\(\/([^)]+)\)/g, (_, file: string) => `![Gofreight](${assetUrl(file)})`)
     .replace(/\]\(\.\.\/README\.md\)/g, '](https://github.com/lsgser/gofreight)')
     .replace(/\]\(([^)]+\.md)\)/g, (_, path: string) => {
       const name = path.replace(/^.*\//, '').replace('.md', '')
@@ -40,7 +42,11 @@ export function MarkdownRenderer({ content }: Props) {
         img: ({ src, alt }) => {
           const isBrand = !brandShown.current
           brandShown.current = true
-          const isLogo = typeof src === 'string' && src.includes('logo')
+          const resolvedSrc =
+            typeof src === 'string' && src.startsWith('/')
+              ? assetUrl(src.slice(1))
+              : src
+          const isLogo = typeof resolvedSrc === 'string' && resolvedSrc.includes('logo')
           const className = isBrand
             ? isLogo
               ? 'doc-brand-logo'
@@ -48,7 +54,7 @@ export function MarkdownRenderer({ content }: Props) {
             : 'doc-inline-img'
           return (
             <img
-              src={src}
+              src={resolvedSrc}
               alt={alt ?? 'Gofreight'}
               className={className}
               loading="lazy"

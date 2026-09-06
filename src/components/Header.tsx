@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { assetUrl } from '../lib/assets'
 import { DocSearch } from './DocSearch'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -13,7 +14,7 @@ export function Header() {
     <header className="site-header">
       <div className="container header-inner">
         <Link to="/" className="brand">
-          <img src="/gofreight-icon.png" alt="" width={32} height={32} />
+          <img src={assetUrl('gofreight-icon.png')} alt="" width={32} height={32} />
           <span>Gofreight</span>
         </Link>
 

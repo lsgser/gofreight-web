@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { docSections, tutorialItems } from '../data/navigation'
 import { features, philosophy, quickStart } from '../data/homeContent'
+import { assetUrl } from '../lib/assets'
 
 export function HomePage() {
   return (
@@ -32,7 +33,7 @@ export function HomePage() {
             </div>
           </div>
           <div className="hero-visual">
-            <img src="/gofreight-logo.png" alt="Gofreight" className="hero-logo" />
+            <img src={assetUrl('gofreight-logo.png')} alt="Gofreight" className="hero-logo" />
             <div className="terminal">
               <div className="terminal-bar">
                 <span></span><span></span><span></span>
@@ -135,7 +136,7 @@ export function HomePage() {
             <p>Install the CLI, scaffold your first resource, and run the dev server in minutes.</p>
           </div>
           <Link to="/docs/tutorial-first-app" className="btn btn-light">
-            <span className="text-white">Start building →</span>
+            Start building →
           </Link>
         </div>
       </section>

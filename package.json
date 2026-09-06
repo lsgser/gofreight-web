@@ -1,12 +1,12 @@
 {
   "name": "gofreight-web",
-  "homepage": "https://gofreight.github.io/lsgser/gofreight-web",
+  "homepage": "https://lsgser.github.io/gofreight-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && cp dist/index.html dist/404.html",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",

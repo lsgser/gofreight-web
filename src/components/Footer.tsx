@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { assetUrl } from '../lib/assets'
 
 export function Footer() {
   return (
@@ -6,7 +7,7 @@ export function Footer() {
       <div className="container footer-grid">
         <div>
           <div className="footer-brand">
-            <img src="/gofreight-icon.png" alt="" width={28} height={28} />
+            <img src={assetUrl('gofreight-icon.png')} alt="" width={28} height={28} />
             <strong>Gofreight</strong>
           </div>
           <p className="footer-tagline">

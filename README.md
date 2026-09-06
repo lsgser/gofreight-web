@@ -127,7 +127,7 @@ Doc pages support the same centered logo header used in README files:
 
 - **Netlify** — publish directory: `dist`
 - **Vercel** — framework preset: Vite
-- **GitHub Pages** — upload `dist/` or use Actions with `base` config if needed
+- **GitHub Pages** — `npm run deploy` (uses `gh-pages`; site base path is `/gofreight-web/` at [lsgser.github.io/gofreight-web](https://lsgser.github.io/gofreight-web))
 - **Any static host** — upload the `dist/` folder
 
 ---
