@@ -16,7 +16,7 @@ export const features = [
   },
   {
     title: 'CLI & Generators',
-    description: '800+ line command reference — scaffold, migrate, seed, queue, schedule, and more.',
+    description: 'Scaffold, migrate, GraphQL modules, auth, queue, schedule — 800+ line command reference.',
     icon: '⌘',
   },
   {
@@ -31,7 +31,7 @@ export const features = [
   },
   {
     title: 'GraphQL',
-    description: 'Modular GraphQL with DataLoader, GraphiQL playground, depth and rate limits.',
+    description: 'Modular GraphQL with DataLoader, playground, and make:graphql-module generators.',
     icon: '◈',
   },
   {

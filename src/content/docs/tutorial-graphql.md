@@ -18,11 +18,23 @@ This tutorial builds a posts API with Gofreight GraphQL — schema defined in SD
 
 ## Prerequisites
 
-A running Gofreight app (`gofreight new myapp && gofreight serve`). Add the GraphQL module files below under `app/graphql/`.
+A running Gofreight app (`gofreight new myapp && gofreight serve`).
+
+**Fast path:** use the generators instead of creating files by hand:
+
+```bash
+gofreight make:graphql
+gofreight make:graphql-module User name:string email:email
+gofreight make:graphql-module Post title:string body:text author_id:references:users
+go mod tidy
+gofreight serve
+```
+
+The steps below show the manual SDL approach under `graphql/` for full control.
 
 ## Step 1 — Define schema in SDL
 
-Create `app/graphql/schema.go` with your type definitions as GraphQL strings:
+Create `graphql/schema.go` with your type definitions as GraphQL strings:
 
 ```go
 package graphql

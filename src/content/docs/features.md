@@ -80,7 +80,7 @@ The router supports these patterns out of the box:
 | CLI commands | [CLI Commands](commands.md) |
 | Code generators | [Generators](generators.md) |
 | HTTP & database testing | [Testing](testing.md) |
-| Dev database admin | [Admin Dashboard](admin.md) |
+| Dev database admin | [Admin Dashboard](admin.md) — phpMyAdmin-style browser UI |
 | Date/time helpers | [Date & Time](datetime.md) |
 | Custom integrations & events | [Extending](extending.md) |
 | Docker & production | [Deployment](deployment.md) |
