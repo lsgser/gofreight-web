@@ -12,6 +12,10 @@ go install github.com/lsgser/gofreight/cmd/gofreight@v0.3.1
 
 ## Unreleased
 
+### Added
+
+- **Unique columns** — Laravel-style `UNIQUE` support in migrations: blueprint fluent API (`b.String("email").NotNull().Unique()`), `database.ColUnique()` option, `UniqueIndex()` for composite indexes, and CLI `:unique` modifier (`email:string:unique`)
+
 ---
 
 ## 0.3.1 — September 7, 2026

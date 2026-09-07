@@ -489,21 +489,21 @@ For ad-hoc schema changes in development, use the [Admin Dashboard](admin.md).
 Programmatic migrations with auto-generated rollback SQL:
 
 ```go
-up, down := database.CreateTableBlueprint("comments", func(b *database.Blueprint) {
-    b.IntegerColumn("post_id", colNotNull())
-    b.StringColumn("body")
-    b.Index("post_id")
+up, down := database.CreateTableBlueprint("users", func(b *database.Blueprint) {
+    b.String("email").NotNull().Unique()
+    b.String("name").NotNull()
+    b.Index("name")
 })
-database.WriteMigrationPair("db/migrate", "004_create_comments", up, down)
+database.WriteMigrationPair("db/migrate", "004_create_users", up, down)
 ```
 
-Column helpers: `StringColumn`, `IntegerColumn`, `BooleanColumn`, `DateTimeColumn`, `DropColumn`, `Index`.
+Column helpers: fluent `String`, `Text`, `Integer`, `Boolean`, `DateTime` (chain `.NotNull()`, `.Unique()`, `.Default()`), or functional `StringColumn`, `IntegerColumn`, etc. with `database.ColNotNull()`, `database.ColUnique()`. Use `Index` and `UniqueIndex` for indexes.
 
 For altering existing tables:
 
 ```go
 up, down := database.AlterTableBlueprint("posts", func(b *database.Blueprint) {
-    b.StringColumn("slug")
+    b.String("slug").NotNull().Unique()
 })
 database.WriteMigrationPair("db/migrate", "005_add_slug_to_posts", up, down)
 ```

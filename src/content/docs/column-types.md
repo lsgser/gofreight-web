@@ -62,48 +62,99 @@ gofreight make:scaffold Comment body:text post_id:references:posts
 
 Creates `post_id INTEGER NOT NULL` and a Go `int64` field. Add association wiring in the model — see **[Models](models.md#foreign-keys)**.
 
+### Unique columns
+
+Append `:unique` to any field type (Laravel-style):
+
+```bash
+gofreight make:scaffold User email:email:unique username:string:unique
+gofreight make:scaffold Article slug:string:unique status:enum:draft,published:unique
+```
+
+Generates `UNIQUE` on the column in the migration:
+
+```sql
+email VARCHAR(255) NOT NULL UNIQUE,
+slug VARCHAR(255) NOT NULL UNIQUE
+```
+
 ---
 
 ## Blueprint DSL
 
 Programmatic migrations in Go (`database.Blueprint`). `CreateTableBlueprint` automatically adds `id`, `created_at`, and `updated_at`.
 
+### Fluent API (Laravel-style)
+
+Chain column modifiers like Laravel's schema builder:
+
 ```go
 import "github.com/lsgser/gofreight/database"
 
+up, down := database.CreateTableBlueprint("users", func(b *database.Blueprint) {
+    b.String("email").NotNull().Unique()
+    b.String("name").NotNull()
+    b.Boolean("active").Default("1")
+})
+database.WriteMigrationPair("db/migrate", "002_create_users", up, down)
+```
+
+Generates:
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    active BOOLEAN DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+```
+
+### Functional options
+
+Use `StringColumn`, `IntegerColumn`, etc. with exported column options:
+
+```go
 up, down := database.CreateTableBlueprint("comments", func(b *database.Blueprint) {
-    b.IntegerColumn("post_id", colNotNull())
-    b.StringColumn("body", colNotNull())
-    b.BooleanColumn("approved", colDefault("0"))
-    b.DateTimeColumn("reviewed_at", colNullable())
+    b.IntegerColumn("post_id", database.ColNotNull())
+    b.StringColumn("body", database.ColNotNull())
+    b.StringColumn("slug", database.ColNotNull(), database.ColUnique())
+    b.BooleanColumn("approved", database.ColDefault("0"))
+    b.DateTimeColumn("reviewed_at", database.ColNullable())
     b.Index("post_id")
+    b.UniqueIndex("slug") // composite unique index on multiple columns
 })
 database.WriteMigrationPair("db/migrate", "004_create_comments", up, down)
 ```
 
 | Blueprint method | SQL type | Notes |
 |------------------|----------|-------|
-| `StringColumn(name, opts...)` | `TEXT` | Strings, text, enums (store as text) |
-| `IntegerColumn(name, opts...)` | `INTEGER` | Integers, foreign keys, booleans (0/1) |
-| `BooleanColumn(name, opts...)` | `BOOLEAN` | Normalized per driver (INTEGER on SQLite) |
-| `DateTimeColumn(name, opts...)` | `TEXT` / `TIMESTAMP` | Datetimes stored as text on SQLite |
+| `String(name)` / `StringColumn(name, opts...)` | `TEXT` | Chain `.NotNull()`, `.Unique()`, `.Default()` |
+| `Text(name)` | `TEXT` | Long text |
+| `Integer(name)` / `IntegerColumn(name, opts...)` | `INTEGER` | Integers, foreign keys |
+| `Boolean(name)` / `BooleanColumn(name, opts...)` | `BOOLEAN` | Normalized per driver |
+| `DateTime(name)` / `DateTimeColumn(name, opts...)` | `TEXT` / `TIMESTAMP` | Datetimes stored as text on SQLite |
 | `DropColumn(name)` | — | Alter-table rollback helper |
 | `Index(columns...)` | — | Creates `CREATE INDEX IF NOT EXISTS ...` |
+| `UniqueIndex(columns...)` | — | Creates `CREATE UNIQUE INDEX IF NOT EXISTS ...` |
 
 ### Column options
 
-```go
-b.StringColumn("slug", colNotNull())           // NOT NULL
-b.StringColumn("bio", colNullable())           // nullable (default for blueprint columns)
-b.IntegerColumn("views", colDefault("0"))      // DEFAULT 0
-```
+| Option | Effect |
+|--------|--------|
+| `.NotNull()` / `database.ColNotNull()` | `NOT NULL` |
+| `.Nullable()` / `database.ColNullable()` | nullable (default for blueprint columns) |
+| `.Default(v)` / `database.ColDefault(v)` | `DEFAULT v` |
+| `.Unique()` / `database.ColUnique()` | `UNIQUE` on the column |
 
 ### Alter table
 
 ```go
 up, down := database.AlterTableBlueprint("posts", func(b *database.Blueprint) {
-    b.StringColumn("slug")
-    b.IntegerColumn("view_count", colDefault("0"))
+    b.String("slug").NotNull().Unique()
+    b.IntegerColumn("view_count", database.ColDefault("0"))
 })
 ```
 
