@@ -120,7 +120,7 @@ Step-by-step guides from zero to production features:
 - Admin panel (dev): \`http://localhost:5000/admin\`
 `,"../content/docs/admin.md":`# Admin dashboard
 
-Browser-based database administration for **development and test environments only** — inspect tables, run queries, and browse records without leaving the browser.
+Browser-based database administration for **development and test environments only**. The UI is inspired by phpMyAdmin — sidebar table list, tabbed table views, SQL console, and schema tools.
 
 > **Warning:** The admin panel is **disabled in production** (\`GOFREIGHT_ENV=production\`). Never expose it publicly.
 
@@ -128,19 +128,22 @@ Browser-based database administration for **development and test environments on
 
 ## Access
 
-Start the dev server:
-
 \`\`\`bash
 gofreight serve
+# → http://localhost:5000/admin
 \`\`\`
 
-Open:
+Optional password protection: set \`ADMIN_PASSWORD\` in \`.env\`.
 
-\`\`\`
-http://localhost:5000/admin
-\`\`\`
+---
 
-The URL is printed in the development server banner.
+## Interface
+
+| Area | Description |
+|------|-------------|
+| **Top bar** | Server driver, quick links (Databases, New table, Import, SQL, Status) |
+| **Left sidebar** | Filterable table list with row counts |
+| **Table tabs** | Browse · Structure · SQL · Search · Insert · Export (per table) |
 
 ---
 
@@ -148,12 +151,20 @@ The URL is printed in the development server banner.
 
 | Feature | Description |
 |---------|-------------|
-| Table browser | List all tables in the connected database |
-| Row viewer | Paginated record browsing |
-| Schema inspection | Column names and types |
-| SQL runner | Execute read queries (development safety limits apply) |
+| Table browser | Dashboard + sidebar with row counts |
+| Browse rows | Paginated grid, column sort, bulk select/delete |
+| Search | Filter rows by column (=, !=, LIKE, >, <, IS NULL) |
+| Insert / edit | Full row CRUD with type hints |
+| Structure | Columns, indexes, add/rename/drop columns |
+| Create table | Visual table builder |
+| SQL console | SELECT / PRAGMA / EXPLAIN with query history |
+| Import SQL | Multi-statement DDL/DML import |
+| Export | Download table as \`.sql\` or \`.csv\` |
+| Empty table | Truncate all rows |
+| Migrations | Save table schema as migration file |
+| Integrations | Status page for configured drivers |
 
-Works with SQLite, PostgreSQL, and MySQL — whatever database your app connects to.
+Works with SQLite, PostgreSQL, and MySQL.
 
 ---
 
@@ -162,21 +173,13 @@ Works with SQLite, PostgreSQL, and MySQL — whatever database your app connects
 Admin mounts automatically in development via \`app.Run()\`:
 
 \`\`\`go
-if app.Config.IsDevelopment() {
-    app.MountAdmin()
-}
-\`\`\`
-
-Manual mount:
-
-\`\`\`go
 app.MountAdmin() // no-op in production
 \`\`\`
 
 Custom config:
 
 \`\`\`go
-cfg := admin.DefaultConfig(true) // debug mode
+cfg := admin.DefaultConfig(true)
 panel, err := admin.New(cfg)
 panel.Mount(app.Router)
 \`\`\`
@@ -185,34 +188,26 @@ panel.Mount(app.Router)
 
 ## Security
 
-- **Production guard:** \`MountAdmin()\` returns immediately when \`GOFREIGHT_ENV=production\`
-- **Local only:** Intended for localhost development
-- **No authentication:** Do not expose on public networks
-- **Read-focused:** Destructive operations are limited in development
-
-For production database management, use dedicated tools (pgAdmin, TablePlus, cloud consoles).
+- **Production guard:** disabled when \`GOFREIGHT_ENV=production\`
+- **Localhost tooling:** not a replacement for pgAdmin in production
+- **Optional auth:** \`ADMIN_PASSWORD\` session login
+- **SQL console:** read-only; use Import for writes
+- **Destructive actions:** drop/truncate/bulk delete require confirmation
 
 ---
 
 ## Troubleshooting
 
-**Admin not loading:**
+**Admin not loading:** confirm \`GOFREIGHT_ENV=development\` and database connectivity.
 
-- Confirm \`GOFREIGHT_ENV=development\`
-- Check database connection (\`gofreight tinker\` → \`SELECT 1\`)
-- Look for warnings in server logs: \`admin panel failed to load\`
-
-**Empty table list:**
-
-- Run migrations: \`gofreight migrate\`
-- Verify \`DATABASE_URL\` points to the correct database
+**Empty table list:** run \`gofreight migrate\`.
 
 ---
 
 ## Related
 
 - [Database](database.md) — migrations and schema
-- [CLI Commands](commands.md) — \`gofreight tinker\` for SQL console
+- [CLI Commands](commands.md) — \`gofreight tinker\`
 - [Deployment](deployment.md) — production (admin disabled)
 `,"../content/docs/api-resources.md":`# API Resources
 
@@ -1284,806 +1279,7 @@ val, ok := store.Get("key")
 - [Integrations](integrations.md) — wiring cache drivers
 - [Application wiring](application-wiring.md) — \`ConfigureIntegrations\`
 - [Storage](storage.md) — file paths for file cache
-`,"../content/docs/changelog.md":"# Changelog\n\nAll notable changes to Gofreight are documented here. The project follows [Semantic Versioning](https://semver.org/).\n\nInstall a specific release:\n\n```bash\ngo install github.com/lsgser/gofreight/cmd/gofreight@v0.3.0\n```\n\n---\n\n## Unreleased\n\n---\n\n## 0.3.0 — September 7, 2026\n\n### Added — Routing\n\n- **Declarative redirect routes** — `Redirect()`, `PermanentRedirect()`\n- **Named route URL generation** — `Router.URL()`, `controller.RouteURL()`, `RedirectRoute()`\n- **Route constraints** — `.Where()`, `.WhereParam()` (regex on `:id`, `:slug`, etc.)\n- **Wildcard & optional parameters** — `{path*}`, `{id?}`, and colon equivalents\n- **Domain & subdomain routing** — `.Domain()`, `.Subdomain()` on route groups\n- **Route model binding** — `BindModel()`, `BindModelBy()`, custom `.Bind()`\n- **Signed URLs** — `URLSigner`, `.Signed()` middleware, `SignedURL()`, `TemporarySignedRoute()`\n- **File download & upload helpers** — `Download()`, `File()`, `StoreUpload()`, `UploadedFile()`\n- **HTTP status helpers** — `Created()`, `NoContent()`, `Abort()`, symbolic `StatusFromName()`\n- **Route-level status** — `.Status()`, `.StatusName()` on route registrars\n- **Extra HTTP verbs** — `Any()`, `Match()`, `Head()`, `Options()`, `Fallback()`\n\nSee the expanded **[Routing](routing.md)** and **[Controllers](controllers.md)** guides.\n\n### Added — Drivers & infrastructure\n\n- **File session driver** — `SESSION_DRIVER=file` persists to `storage/framework/sessions/`\n- **File cache store** — `CACHE_STORE=file` persists to `storage/framework/cache/data/`\n- **Local storage disk** — `FILESYSTEM_DISK=local` with `app.Storage` and upload helpers\n- **Redis job serialization** — named jobs (`NamedJob`, `RegisterJob`) for Redis workers\n- **Task scheduler** — `schedule.Scheduler`, `gofreight schedule:run`, `bootstrap/schedule.go`\n- **Notifications** — multi-channel sender (mail + database store callback)\n- **Exception handler** — `app.UseExceptionHandler()` with HTML/JSON panic recovery\n- **Route cache** — `gofreight route:cache`, `GOFREIGHT_ROUTE_CACHE=1`\n- **REST `only` / `except`** — `router.ResourceOptions` on `Resources()` / `ApiResource()`\n- **Authorization gates** — model-aware `auth.Gate` with `Define`, `Allows`, `RequireGate`\n- **Vite integration** — `#vite` GFT directive, dev proxy, `app.UseVite()`\n- **Redis WebSocket broadcast** — `app.UseRedisBroadcast()` for multi-instance realtime\n- **Auth starter** — `gofreight make:auth` generates login/register views, routes, and controllers\n\n### Added — Documentation\n\n- **CLI commands** — in-depth reference with examples for every `gofreight` command (including `tinker`, migrations, queues, generators)\n- **Scheduling, notifications, storage, error handling** — new guides with honest capability notes\n- **Testing guide fixes** — correct `Describe(t, ...)` and `app.Draw()` usage\n\n---\n\n## 0.2.0 — September 6, 2026\n\n### Added\n\n- **GraphQL server** — modular schema modules, SDL string definitions (`GQL()`), DataLoader batching, GraphiQL playground, query depth/complexity limits, and production security defaults. See [GraphQL](graphql.md) and the [GraphQL tutorial](tutorial-graphql.md).\n- **Real-time WebSockets** — socket.io-style rooms, events, and broadcasts with a TypeScript client (`GofreightSocket`). See [Real-time WebSockets](realtime.md) and the [real-time tutorial](tutorial-realtime.md).\n- **Route groups** — prefix, middleware, and nested groups for clean API versioning. See [Routing](routing.md).\n- **JWT authentication guard** — protect API routes with bearer tokens. See [Authentication](authentication.md) and the [JWT tutorial](tutorial-auth-jwt.md).\n- **Vine schema validation** — declarative request validation for forms and JSON APIs. See [Forms & Validation](forms-validation.md).\n- **Production CLI guard** — mutating commands (`migrate`, `db:wipe`, `db:seed`, `make:*`, queue/cache clears, and more) show a red **PRODUCTION ENVIRONMENT** banner and require typing `yes` to continue when `GOFREIGHT_ENV=production`. Pass `--force` to skip the prompt in CI/deploy scripts.\n- **Documentation site** — full framework guides, six step-by-step tutorials, and searchable docs (see the `gofreight-web` repository).\n\n### Changed\n\n- **CLI help output** — running `gofreight` with no arguments shows the banner once; command categories use cyan headers, bold command names, and dimmed descriptions.\n- **CLI command list** — section heading is now **Available commands** (no duplicate framework title).\n\n### Fixed\n\n- **CLI banner** — removed duplicate Gofreight name, version, and tagline when invoking the root command.\n- **Docs site dark mode** — “Start building” CTA button text is readable on the orange banner in dark theme.\n\n---\n\n## 0.1.0 — September 5, 2026\n\nInitial public release — a batteries-included Go web framework you compile to a single binary.\n\n### Added\n\n- **HTTP routing** — RESTful resources (`Resources`, `ApiResource`), middleware pipeline, and named routes.\n- **Controllers & GFT templating** — MVC handlers and **Gofreight Templates** (`.gft`) with layouts, partials, and form helpers.\n- **ORM** — chainable queries, associations, validations, lifecycle callbacks, soft deletes, pagination, and transactions.\n- **Database layer** — migrations, SQL/Go seeders, blueprint DSL, multi-driver support (SQLite, PostgreSQL, MySQL), SQLite by default for new apps.\n- **CLI (`gofreight`)** — `new`, `serve`, `dev`, `migrate`, `make:*` generators, queue/cache/config commands, branded welcome banners, and `gofreight list` grouped by namespace.\n- **Authentication** — session login, password hashing, API tokens, OAuth helpers, email verification, and password reset tokens.\n- **Authorization** — policies and role-based middleware.\n- **API resources** — JSON serializers for REST responses.\n- **Jobs & queues** — background jobs with Redis queue driver and `queue:work`.\n- **Mail** — mailables and SMTP delivery.\n- **Cache** — in-memory and Redis stores, HTTP response caching, fragment caching.\n- **Sessions** — cookie sessions, flash messages, encrypted cookies.\n- **Service container** — dependency injection and service registration.\n- **Configuration** — `.env` loading, YAML config files, `APP_KEY` encryption, and structured database config.\n- **Testing (`gftest`)** — HTTP test helpers, factories, fakes, and database seeding for tests.\n- **Admin dashboard** — local-only database admin at `/admin` in development.\n- **Security** — CSRF, CORS, rate limiting, security headers, and maintenance mode (`gofreight down` / `up`).\n- **Generators** — scaffold full CRUD resources, models, controllers, migrations, mail, jobs, policies, factories, and auth scaffolding.\n- **Example apps** — `demoapp/` and `examples/blog/`.\n\n---\n\n## Upgrade notes\n\n### From 0.2.0 to 0.3.0\n\n1. Update the module version in your app's `go.mod`:\n\n   ```bash\n   go get github.com/lsgser/gofreight@v0.3.0\n   go mod tidy\n   ```\n\n2. Reinstall the CLI:\n\n   ```bash\n   go install github.com/lsgser/gofreight/cmd/gofreight@v0.3.0\n   ```\n\n3. **New apps** pick up file session/cache drivers, `bootstrap/schedule.go`, and `make:auth` starter automatically.\n\n4. **Existing apps** — optionally add `app.UseExceptionHandler()`, `app.UseVite()`, and Redis broadcast wiring from the [Application wiring](application-wiring.md) guide.\n\n### From 0.1.0 to 0.2.0\n\n1. Update the module version in your app’s `go.mod`:\n\n   ```bash\n   go get github.com/lsgser/gofreight@v0.2.0\n   go mod tidy\n   ```\n\n2. Reinstall the CLI:\n\n   ```bash\n   go install github.com/lsgser/gofreight/cmd/gofreight@v0.2.0\n   ```\n\n3. **Production deploys** — if you run CLI commands against production databases, add `--force` to non-interactive scripts (e.g. `gofreight migrate --force`) or expect the new confirmation prompt.\n\n4. **Optional** — add GraphQL or WebSockets using the new guides; existing REST and HTML apps continue to work unchanged.\n","../content/docs/commands.md":`# CLI commands
-
-Gofreight ships a comprehensive CLI for scaffolding, migrations, queues, and day-to-day development. Run from your **application root** (where \`main.go\` and \`.env\` live).
-
-\`\`\`bash
-gofreight list          # all commands grouped by namespace
-gofreight help migrate  # short help for one command
-gofreight               # banner + full command list
-\`\`\`
-
-Legacy forms still work: \`gofreight generate …\`, \`gofreight make …\`, \`gofreight db:migrate\`, and \`gofreight routes\`.
-
----
-
-## Production safety
-
-When \`GOFREIGHT_ENV=production\`, mutating commands (\`migrate\`, \`db:wipe\`, \`tinker\`, \`make:*\`, \`queue:clear\`, and others) show a red **PRODUCTION ENVIRONMENT** banner and require typing \`yes\` to continue.
-
-For CI and deploy scripts, pass **\`--force\`** to skip the prompt:
-
-\`\`\`bash
-gofreight migrate --force
-gofreight db:seed --force
-\`\`\`
-
----
-
-## Application commands
-
-### \`gofreight new <name>\`
-
-Creates a new Gofreight application in a folder named \`<name>\` with SQLite by default, route files, bootstrap wiring, \`.env.example\`, and starter views.
-
-\`\`\`bash
-gofreight new blog
-cd blog
-gofreight key:generate
-gofreight db:create
-gofreight migrate
-gofreight serve
-\`\`\`
-
-**What you get:** \`main.go\`, \`bootstrap/app.go\`, \`routes/\`, \`app/\`, \`db/migrate/\`, \`public/\`, \`tests/\`, and a branded welcome message with next steps.
-
----
-
-### \`gofreight serve\`
-
-Loads \`.env\`, prints the development server banner (local URL and admin link in development), then runs \`go run .\`.
-
-\`\`\`bash
-gofreight serve
-# Local   http://localhost:5000
-# Admin   http://localhost:5000/admin  (development only)
-\`\`\`
-
-Use this for normal local development. The server reads \`PORT\` and \`HOST\` from \`.env\`.
-
----
-
-### \`gofreight dev [dir]\` / \`gofreight watch\`
-
-Runs the app with **file watching**. When \`.go\`, \`.html\`, \`.sql\`, or \`.css\` files change under \`dir\` (default \`.\`), the dev server restarts automatically.
-
-\`\`\`bash
-gofreight dev
-gofreight dev ./cmd   # watch a subdirectory only
-\`\`\`
-
-Equivalent to \`watch\` (hidden alias). Uses \`go run .\` under the hood.
-
----
-
-### \`gofreight tinker\` / \`gofreight db\` / \`gofreight console\`
-
-Opens an **interactive SQL console** connected to your application database. Loads \`.env\`, connects using \`DATABASE_URL\` / \`DB_*\` settings, then accepts SQL one statement at a time.
-
-\`\`\`bash
-gofreight tinker
-\`\`\`
-
-**Session example:**
-
-\`\`\`
-Gofreight console — type SQL and press Enter (exit to quit)
-gofreight> SELECT id, title FROM posts LIMIT 5;
-map[id:1 title:Hello]
-map[id:2 title:World]
-gofreight> INSERT INTO posts (title, body) VALUES ('Draft', 'Notes');
-OK
-gofreight> SELECT COUNT(*) AS n FROM posts;
-map[n:3]
-gofreight> exit
-\`\`\`
-
-**How it works:**
-
-1. Reads \`.env\` and resolves the database URL from config.
-2. Opens a connection via the framework ORM layer.
-3. Each line you type is executed with \`database.ExecQuery\`.
-4. \`SELECT\` results print as row maps; writes print \`OK\`.
-5. Type \`exit\` or \`quit\` to leave.
-
-**Tips:**
-
-- Run from your app root so \`.env\` is found.
-- Works with SQLite, PostgreSQL, and MySQL drivers configured in \`.env\`.
-- For complex exploration, prefer small \`SELECT\` queries; there is no transaction wrapper — \`INSERT\`/\`UPDATE\`/\`DELETE\` commit immediately.
-- Aliases: \`gofreight db\`, \`gofreight console\`.
-
----
-
-### \`gofreight test [packages]\`
-
-Runs Go tests. Default: \`go test ./...\`. Pass package paths to narrow scope.
-
-\`\`\`bash
-gofreight test
-gofreight test ./tests/...
-gofreight test ./app/models/...
-\`\`\`
-
----
-
-### \`gofreight about\`
-
-Prints framework version, current environment, working directory, and masked database URL.
-
-\`\`\`bash
-gofreight about
-# Gofreight 0.3.0
-# Environment development
-# Path /Users/you/projects/blog
-# Database sqlite://***@/db/development.db
-\`\`\`
-
----
-
-### \`gofreight env\`
-
-Prints the current \`GOFREIGHT_ENV\` / \`APP_ENV\` value only (useful in shell scripts).
-
-\`\`\`bash
-gofreight env
-# development
-\`\`\`
-
----
-
-### \`gofreight down [message]\` / \`gofreight up\`
-
-**Maintenance mode.** \`down\` writes \`storage/framework/maintenance\` with an optional custom message; middleware can serve a maintenance page. \`up\` removes that file.
-
-\`\`\`bash
-gofreight down
-gofreight down Deploying v2.1 — back in 10 minutes
-gofreight up
-\`\`\`
-
----
-
-### \`gofreight inspire\`
-
-Prints a random programming quote (morale boost for long deploy days).
-
-\`\`\`bash
-gofreight inspire
-\`\`\`
-
----
-
-### \`gofreight list\` / \`gofreight help\`
-
-- **\`list\`** — grouped, colorized command list in the terminal.
-- **\`help <command>\`** — description and usage for one command.
-
-\`\`\`bash
-gofreight list
-gofreight list migrate    # filter by name or category
-gofreight help make:scaffold
-\`\`\`
-
----
-
-### \`gofreight version\` / \`-v\` / \`--version\`
-
-Shows the branded Gofreight banner and installed CLI version.
-
-\`\`\`bash
-gofreight version
-gofreight -v
-\`\`\`
-
----
-
-## Database commands
-
-### \`gofreight db:create\`
-
-Creates the database. For **SQLite**, creates the file and parent directories. For PostgreSQL/MySQL, prints driver info and reminds you to create the database on the server.
-
-\`\`\`bash
-# .env
-DB_CONNECTION=sqlite
-DB_DATABASE=db/development.db
-
-gofreight db:create
-# Created SQLite database: db/development.db
-\`\`\`
-
----
-
-### \`gofreight db:show\`
-
-Displays connection name, host, port, database name, driver, and masked URL.
-
-\`\`\`bash
-gofreight db:show
-# Connection sqlite
-# Database db/development.db
-# Driver sqlite
-# URL sqlite://***@/db/development.db
-\`\`\`
-
----
-
-### \`gofreight db:seed\` / \`gofreight db:seed --class=Name\`
-
-Seeds the database in two passes:
-
-1. **SQL seeds** — runs all \`*.sql\` files in \`db/seeds/\`.
-2. **Go seeders** — runs \`cmd/seed/main.go\` if present (all registered seeders, or one with \`--class\`).
-
-\`\`\`bash
-gofreight make:seeder DatabaseSeeder
-# register in cmd/seed/main.go, then:
-gofreight db:seed
-gofreight db:seed --class=DatabaseSeeder
-\`\`\`
-
-**Example Go seeder** (\`db/seeders/database_seeder.go\`):
-
-\`\`\`go
-func (s *DatabaseSeeder) Run(ctx context.Context) error {
-    _, err := database.DB().ExecContext(ctx,
-        \`INSERT INTO users (email, password) VALUES (?, ?)\`,
-        "admin@example.com", hashedPassword,
-    )
-    return err
-}
-\`\`\`
-
----
-
-### \`gofreight db:wipe\`
-
-**Destructive.** Drops all tables in the connected database. Use in development only.
-
-\`\`\`bash
-gofreight db:wipe
-# Dropping all tables...
-# Done.
-\`\`\`
-
-In production, you must confirm or pass \`--force\`.
-
----
-
-## Migration commands
-
-Migrations live in \`db/migrate/\` as numbered SQL files (e.g. \`001_create_posts.sql\`).
-
-### \`gofreight migrate\` / \`gofreight db:migrate\`
-
-Runs all **pending** migrations (tracks applied files in a migrations table). \`db:migrate\` is a legacy alias.
-
-\`\`\`bash
-gofreight make:migration create_posts
-# edit db/migrate/001_create_posts.sql
-gofreight migrate
-# Running migrations...
-# Done.
-\`\`\`
-
----
-
-### \`gofreight migrate:status\`
-
-Lists each migration file and whether it is **up** or **down**.
-
-\`\`\`bash
-gofreight migrate:status
-# Migration                                Status
-# -------------------------------------------------------
-# 001_create_posts.sql                     up
-# 002_add_status_to_posts.sql              down
-\`\`\`
-
-Alias: \`gofreight db:status\`.
-
----
-
-### \`gofreight migrate:rollback\`
-
-Rolls back the **last applied** migration only.
-
-\`\`\`bash
-gofreight migrate:rollback
-\`\`\`
-
-Alias: \`gofreight db:rollback\`.
-
----
-
-### \`gofreight migrate:reset\`
-
-Rolls back **all** migrations (empty schema, migration history cleared).
-
-\`\`\`bash
-gofreight migrate:reset
-\`\`\`
-
----
-
-### \`gofreight migrate:refresh\`
-
-Rolls back all migrations, then runs them again from scratch.
-
-\`\`\`bash
-gofreight migrate:refresh
-\`\`\`
-
----
-
-### \`gofreight migrate:fresh\` / \`migrate:fresh --seed\`
-
-**Destructive.** Drops all tables, re-runs every migration, optionally seeds.
-
-\`\`\`bash
-gofreight migrate:fresh
-gofreight migrate:fresh --seed
-\`\`\`
-
-Common local workflow after schema experiments:
-
-\`\`\`bash
-gofreight migrate:fresh --seed --force   # in CI only
-\`\`\`
-
----
-
-## Make commands (generators)
-
-All \`make:*\` commands accept **\`name:type\`** field pairs for models and scaffolds. See [Generators & field types](generators.md) for the full type reference.
-
-Legacy: \`gofreight make scaffold Post title:string\` or \`gofreight generate model Post title:string\`.
-
-### \`gofreight make:model <Name> [fields]\`
-
-Creates \`app/models/<name>.go\` and a migration.
-
-\`\`\`bash
-gofreight make:model Post title:string body:text published:boolean
-gofreight migrate
-\`\`\`
-
----
-
-### \`gofreight make:controller <Name>\`
-
-Creates a REST-style controller skeleton in \`app/controllers/\`.
-
-\`\`\`bash
-gofreight make:controller Posts
-\`\`\`
-
----
-
-### \`gofreight make:migration <name>\`
-
-Creates a timestamped SQL file in \`db/migrate/\` (empty up/down template).
-
-\`\`\`bash
-gofreight make:migration add_status_to_posts
-# edit db/migrate/002_add_status_to_posts.sql
-gofreight migrate
-\`\`\`
-
----
-
-### \`gofreight make:scaffold\` / \`make:resource\`
-
-Full **HTML CRUD**: model, controller, GFT views, migration, factory, test, and route registration hint in \`routes/web.go\`.
-
-\`\`\`bash
-gofreight make:scaffold Post title:string body:text status:enum:draft,published
-gofreight migrate
-# add controllers.RegisterPostRoutes(r) in routes/web.go if not auto-inserted
-gofreight serve
-# visit http://localhost:5000/posts
-\`\`\`
-
-\`make:resource\` is an alias for \`make:scaffold\`.
-
----
-
-### \`gofreight make:api <Name> [fields]\`
-
-JSON API controller + \`app/resources/\` serializer. Register routes in \`routes/api.go\` with \`ApiResource\`.
-
-\`\`\`bash
-gofreight make:api Post title:string body:text
-gofreight migrate
-\`\`\`
-
----
-
-### \`gofreight make:auth\`
-
-Installs a complete auth starter:
-
-- \`User\` model + migrations (password resets, API tokens, email verification column)
-- \`app/controllers/auth_controller.go\` — login, register, logout
-- \`app/views/auth/login.gft\` and \`register.gft\`
-- \`routes/auth.go\` wired into \`routes/register.go\`
-- \`app/auth/users.go\` — \`FindUserByEmail\`, \`RegisterUser\`
-- Seed snippet in \`db/seeds/users.sql\` (admin@example.com / \`secret123\`)
-
-\`\`\`bash
-gofreight make:auth
-gofreight migrate
-gofreight db:seed
-gofreight serve
-# visit /login and /register
-\`\`\`
-
----
-
-### \`gofreight make:service <Name>\`
-
-Business logic class in \`app/services/\`.
-
-\`\`\`bash
-gofreight make:service PostPublishing
-# register in bootstrap/app.go:
-# app.Singleton("postPublishing", func() any { return services.NewPostPublishingService() })
-\`\`\`
-
----
-
-### \`gofreight make:mail\` / \`make:mailable <Name>\`
-
-Mailable class + GFT email view.
-
-\`\`\`bash
-gofreight make:mail WelcomeEmail
-gofreight make:mailable OrderShipped   # alias
-\`\`\`
-
----
-
-### \`gofreight make:job <Name>\`
-
-Queueable job in \`app/jobs/\`, registered by name for Redis workers.
-
-\`\`\`bash
-gofreight make:job SendNewsletter
-# dispatch from app code; process with gofreight queue:work
-\`\`\`
-
----
-
-### \`gofreight make:middleware <Name>\`
-
-HTTP middleware in \`app/middleware/\`.
-
-\`\`\`bash
-gofreight make:middleware RequestLogger
-# register in bootstrap/app.go or on route groups
-\`\`\`
-
----
-
-### \`gofreight make:policy <Name>\`
-
-Authorization policy in \`app/policies/\`.
-
-\`\`\`bash
-gofreight make:policy PostPolicy
-\`\`\`
-
----
-
-### \`gofreight make:request <Name>\`
-
-Form request / Vine validator in \`app/requests/\`.
-
-\`\`\`bash
-gofreight make:request StorePostRequest
-\`\`\`
-
----
-
-### \`gofreight make:seeder <Name>\`
-
-Go seeder in \`db/seeders/\` and \`cmd/seed/main.go\` (first run only).
-
-\`\`\`bash
-gofreight make:seeder DatabaseSeeder
-gofreight db:seed --class=DatabaseSeeder
-\`\`\`
-
----
-
-### \`gofreight make:factory <Name>\`
-
-Test factory with faker defaults in \`tests/factories/\`.
-
-\`\`\`bash
-gofreight make:factory Post
-\`\`\`
-
----
-
-### \`gofreight make:test <Name>\`
-
-HTTP feature test skeleton in \`tests/\`.
-
-\`\`\`bash
-gofreight make:test Posts
-\`\`\`
-
----
-
-## Queue commands (Redis)
-
-Requires \`REDIS_URL\` or \`REDIS_HOST\` in \`.env\`. Default queue key: \`gofreight:jobs\`.
-
-### \`gofreight queue:work [--queue=key]\`
-
-Long-running worker. Processes one job at a time until Ctrl+C.
-
-\`\`\`bash
-# .env
-REDIS_URL=redis://127.0.0.1:6379/0
-QUEUE_DRIVER=redis
-
-gofreight queue:work
-gofreight queue:work --queue=emails
-\`\`\`
-
-Start this in a separate terminal alongside \`gofreight serve\`.
-
----
-
-### \`gofreight queue:failed\`
-
-Lists failed jobs with ID, name, attempt count, and exception message.
-
-\`\`\`bash
-gofreight queue:failed
-# abc123  SendNewsletter  attempts=3  connection refused
-\`\`\`
-
----
-
-### \`gofreight queue:retry <id>\`
-
-Re-queues a single failed job by ID.
-
-\`\`\`bash
-gofreight queue:retry abc123
-\`\`\`
-
----
-
-### \`gofreight queue:flush\`
-
-Removes all **failed** job records from the failed queue.
-
-\`\`\`bash
-gofreight queue:flush
-\`\`\`
-
----
-
-### \`gofreight queue:clear\`
-
-Removes all **pending** jobs from the queue (does not run them).
-
-\`\`\`bash
-gofreight queue:clear
-\`\`\`
-
----
-
-## Routes, cache, views, config
-
-### \`gofreight route:list\`
-
-Scans \`routes/*.go\` and prints method + pattern lines found in source (static analysis, not a live router dump).
-
-\`\`\`bash
-gofreight route:list
-# METHOD  PATTERN
-# GET     /
-# GET     /posts
-# POST    /posts
-\`\`\`
-
-Legacy alias: \`gofreight routes\`.
-
----
-
-### \`gofreight route:clear\`
-
-Deletes \`bootstrap/cache/routes.gob\` if present.
-
-\`\`\`bash
-gofreight route:clear
-\`\`\`
-
----
-
-### \`gofreight cache:clear\`
-
-Clears files under \`storage/framework/cache/\`.
-
-\`\`\`bash
-gofreight cache:clear
-\`\`\`
-
----
-
-### \`gofreight view:clear\`
-
-Clears compiled GFT views under \`storage/framework/views/\`.
-
-\`\`\`bash
-gofreight view:clear
-\`\`\`
-
-Use after editing \`.gft\` templates if cached views look stale.
-
----
-
-### \`gofreight config:show [key]\`
-
-Prints loaded configuration. Secrets are masked.
-
-\`\`\`bash
-gofreight config:show
-gofreight config:show environment
-gofreight config:show database_url
-gofreight config:show port
-\`\`\`
-
-Supported keys: \`environment\`, \`env\`, \`host\`, \`port\`, \`database_url\`, \`database\`, \`db_connection\`, \`db_database\`, \`log_level\`, \`app_key\`, \`secret_key\`.
-
----
-
-### \`gofreight key:generate [--show] [--force]\`
-
-Generates a random \`APP_KEY\` and writes it to \`.env\`. Required for sessions, CSRF, and encrypted cookies.
-
-\`\`\`bash
-gofreight key:generate
-gofreight key:generate --show    # print only, do not write
-gofreight key:generate --force   # overwrite existing key
-\`\`\`
-
-Run once after \`gofreight new\`. Never commit production keys.
-
----
-
-### \`gofreight optimize\` / \`gofreight optimize:clear\`
-
-Writes or clears a bootstrap cache marker under \`bootstrap/cache/\` (production performance hint).
-
-\`\`\`bash
-gofreight optimize
-gofreight optimize:clear
-\`\`\`
-
----
-
-### \`gofreight auth:clear-resets\`
-
-Deletes expired rows from \`password_reset_tokens\` (when the table exists).
-
-\`\`\`bash
-gofreight auth:clear-resets
-\`\`\`
-
-Schedule periodically in production or run after auth-heavy releases.
-
----
-
-## Schedule commands
-
-### \`gofreight schedule:run\`
-
-Boots the app with \`GOFREIGHT_SCHEDULE_RUN=1\`, executes due tasks from \`bootstrap/schedule.go\`, and exits.
-
-\`\`\`bash
-gofreight schedule:run
-\`\`\`
-
-**Cron example:**
-
-\`\`\`cron
-* * * * * cd /path/to/app && gofreight schedule:run
-\`\`\`
-
-### \`gofreight schedule:list\`
-
-Prints a reminder that tasks are defined in \`bootstrap/schedule.go\`. See [Scheduling](scheduling.md).
-
----
-
-## Route cache
-
-### \`gofreight route:cache\`
-
-Writes route metadata to \`bootstrap/cache/routes.json\` for faster URL generation.
-
-\`\`\`bash
-gofreight route:cache
-\`\`\`
-
-Runs the app with \`GOFREIGHT_ROUTE_CACHE=1\` and exits after writing the cache file.
-
----
-
-## End-to-end workflows
-
-### New app from zero
-
-\`\`\`bash
-gofreight new shop
-cd shop
-gofreight key:generate
-gofreight db:create
-gofreight migrate
-gofreight make:scaffold Product name:string price:float
-gofreight migrate
-gofreight serve
-\`\`\`
-
-### Debug data with tinker
-
-\`\`\`bash
-gofreight tinker
-gofreight> SELECT * FROM products WHERE price > 10;
-gofreight> UPDATE products SET price = 9.99 WHERE id = 1;
-gofreight> exit
-\`\`\`
-
-### Reset local database
-
-\`\`\`bash
-gofreight migrate:fresh --seed
-\`\`\`
-
-### Background jobs
-
-\`\`\`bash
-# terminal 1
-gofreight serve
-
-# terminal 2
-gofreight queue:work
-\`\`\`
-
----
-
-## Legacy command forms
-
-Older tutorials and scripts may use these equivalents:
-
-| Legacy | Modern |
-|--------|--------|
-| \`gofreight generate model Post title:string\` | \`gofreight make:model Post title:string\` |
-| \`gofreight make scaffold Post title:string\` | \`gofreight make:scaffold Post title:string\` |
-| \`gofreight db:migrate\` | \`gofreight migrate\` |
-| \`gofreight routes\` | \`gofreight route:list\` |
-| \`gofreight db\` | \`gofreight tinker\` |
-
-The \`generate\` and \`make\` commands (without colon) dispatch to the same generators as \`make:*\`.
-
----
-
-## Related guides
-
-- [Generators & field types](generators.md) — full \`name:type\` reference
-- [Database & migrations](database.md) — blueprint DSL and seeders
-- [Jobs & queues](jobs.md) — dispatching and workers
-- [Routing](routing.md) — route groups and API resources
-- [Getting started](getting-started.md) — install the CLI
-`,"../content/docs/configuration.md":'# Configuration\n\nGofreight loads configuration from environment variables, `.env` files, and layered YAML config files. Environment variables always take precedence.\n\n## Environment variables\n\nEvery new app includes a `.env` file. Key variables:\n\n| Variable | Default | Purpose |\n|----------|---------|---------|\n| `APP_NAME` | `Gofreight` | Application name |\n| `APP_KEY` | — | Encryption/signing key (sessions, JWT, CSRF) |\n| `APP_URL` | `http://localhost:5000` | Base URL |\n| `APP_DEBUG` | `true` | Debug mode |\n| `GOFREIGHT_ENV` | `development` | `development`, `test`, or `production` |\n| `PORT` | `5000` | HTTP port |\n| `HOST` | `0.0.0.0` | Bind address |\n| `DB_CONNECTION` | `sqlite` | `sqlite`, `pgsql`, `mysql`, `mariadb` |\n| `DB_HOST` | `127.0.0.1` | Database host |\n| `DB_PORT` | — | `5432` (Postgres) or `3306` (MySQL) |\n| `DB_DATABASE` | — | Database name |\n| `DB_USERNAME` | — | Database user |\n| `DB_PASSWORD` | — | Database password |\n| `DB_SSLMODE` | `disable` | Postgres SSL mode |\n| `DATABASE_URL` | — | Full connection URL (overrides `DB_*`) |\n| `SESSION_DRIVER` | `file` | `file`, `redis`, or `memory` |\n| `CACHE_STORE` | `file` | `file`, `redis`, or in-memory default |\n| `QUEUE_DRIVER` / `QUEUE_CONNECTION` | `sync` | `sync` (in-process), `redis` |\n| `FILESYSTEM_DISK` | `local` | `local` filesystem disk (`storage/app`) |\n| `STORAGE_LOCAL_ROOT` | `storage/app` | Root path for local disk |\n| `VITE_DEV_SERVER_URL` | `http://localhost:5173` | Vite dev server (when `public/hot` exists) |\n| `REDIS_URL` | — | Redis for sessions, cache, queue, WebSocket broadcast |\n| `JWT_TTL` | `24h` | JWT token lifetime |\n| `LOG_LEVEL` | `info` | Log verbosity |\n| `MAIL_DRIVER` | `log` | `log`, `smtp`, `sendgrid` |\n| `MAIL_FROM` | — | Default sender address |\n\nRun `gofreight key:generate` after scaffolding to set a unique `APP_KEY`.\n\n## YAML config files\n\nLayered YAML in `config/`:\n\n```\nconfig/\n├── app.yaml           # Base settings\n├── development.yaml   # Development overrides\n├── production.yaml    # Production overrides\n└── test.yaml          # Test overrides\n```\n\nExample `config/app.yaml`:\n\n```yaml\napp_name: myapp\nport: 5000\nlog_level: info\n```\n\nEnvironment-specific files merge on top. Keys map to env vars via `ApplyEnv`:\n\n```go\nfiles.ApplyEnv(map[string]string{\n    "PORT":    "port",\n    "APP_KEY": "app_key",\n})\n```\n\n## Loading config\n\n`application.New()` calls `config.Load()` automatically:\n\n```go\napp := application.New()\napp.Config.AppName   // from APP_NAME or YAML\napp.Config.Port      // from PORT or YAML\napp.Config.AppKey    // from APP_KEY\napp.Config.DatabaseURL\n```\n\nInspect resolved config:\n\n```bash\ngofreight config:show\ngofreight config:show database\n```\n\n## Database configuration\n\nDiscrete `DB_*` variables (recommended):\n\n```env\nDB_CONNECTION=pgsql\nDB_HOST=127.0.0.1\nDB_PORT=5432\nDB_DATABASE=myapp\nDB_USERNAME=postgres\nDB_PASSWORD=secret\nDB_SSLMODE=disable\n```\n\nOr a single URL:\n\n```env\nDATABASE_URL=postgres://user:pass@localhost:5432/myapp?sslmode=disable\n```\n\nResolution order: `DATABASE_URL` → `DB_URL` → built from `DB_*`.\n\nSee **[ORM](orm.md#database-configuration)** and **[Database](database.md)**.\n\n## Integrations via env\n\nMail, cache, and local storage drivers are configured through environment variables. See **[Integrations](integrations.md)** and **[Storage](storage.md)**.\n\n```env\nMAIL_DRIVER=smtp\nMAIL_HOST=smtp.example.com\nMAIL_PORT=587\n\nSESSION_DRIVER=file\nCACHE_STORE=file\nFILESYSTEM_DISK=local\n\n# Optional — enables Redis sessions, cache, queue, and WebSocket broadcast\nREDIS_URL=redis://127.0.0.1:6379\n```\n\n> **Honest defaults:** New apps scaffold with **file** sessions and cache. Cloud storage (S3) is not a built-in driver yet — use the local disk or wire a custom integration.\n\n## Bootstrap wiring\n\nUse `bootstrap/app.go` to configure the application based on config:\n\n```go\nfunc Application() *application.Application {\n    app := application.New()\n\n    if os.Getenv("SESSION_DRIVER") == "redis" {\n        _ = app.UseRedisSessions(os.Getenv("REDIS_URL"))\n    }\n    if os.Getenv("QUEUE_DRIVER") == "redis" {\n        _ = app.UseRedisQueue(os.Getenv("REDIS_URL"))\n    }\n\n    app.UseCSRF()\n    _ = app.ConfigureIntegrations()\n\n    return app\n}\n```\n\n## Production checklist\n\n- Set `GOFREIGHT_ENV=production`\n- Set `APP_DEBUG=false`\n- Run `gofreight key:generate` and keep `APP_KEY` secret\n- Use PostgreSQL or MySQL instead of SQLite\n- Set `SESSION_DRIVER=redis` for multi-process deployments\n- Never commit `.env` — use `.env.example` as a template\n\nSee **[Deployment](deployment.md)** and **[Security](security.md)**.\n\n## Related\n\n- [Database](database.md) — migrations and seeding\n- [Integrations](integrations.md) — mail, storage, cache drivers\n- [Getting Started](getting-started.md) — first app setup\n',"../content/docs/controllers.md":`# Controllers
+`,"../content/docs/changelog.md":"# Changelog\n\nAll notable changes to Gofreight are documented here. The project follows [Semantic Versioning](https://semver.org/).\n\nInstall a specific release:\n\n```bash\ngo install github.com/lsgser/gofreight/cmd/gofreight@v0.3.0\n```\n\n---\n\n## Unreleased\n\n---\n\n## 0.3.0 — September 7, 2026\n\n### Added — Routing\n\n- **Declarative redirect routes** — `Redirect()`, `PermanentRedirect()`\n- **Named route URL generation** — `Router.URL()`, `controller.RouteURL()`, `RedirectRoute()`\n- **Route constraints** — `.Where()`, `.WhereParam()` (regex on `:id`, `:slug`, etc.)\n- **Wildcard & optional parameters** — `{path*}`, `{id?}`, and colon equivalents\n- **Domain & subdomain routing** — `.Domain()`, `.Subdomain()` on route groups\n- **Route model binding** — `BindModel()`, `BindModelBy()`, custom `.Bind()`\n- **Signed URLs** — `URLSigner`, `.Signed()` middleware, `SignedURL()`, `TemporarySignedRoute()`\n- **File download & upload helpers** — `Download()`, `File()`, `StoreUpload()`, `UploadedFile()`\n- **HTTP status helpers** — `Created()`, `NoContent()`, `Abort()`, symbolic `StatusFromName()`\n- **Route-level status** — `.Status()`, `.StatusName()` on route registrars\n- **Extra HTTP verbs** — `Any()`, `Match()`, `Head()`, `Options()`, `Fallback()`\n\nSee the expanded **[Routing](routing.md)** and **[Controllers](controllers.md)** guides.\n\n### Added — Drivers & infrastructure\n\n- **File session driver** — `SESSION_DRIVER=file` persists to `storage/framework/sessions/`\n- **File cache store** — `CACHE_STORE=file` persists to `storage/framework/cache/data/`\n- **Local storage disk** — `FILESYSTEM_DISK=local` with `app.Storage` and upload helpers\n- **Redis job serialization** — named jobs (`NamedJob`, `RegisterJob`) for Redis workers\n- **Task scheduler** — `schedule.Scheduler`, `gofreight schedule:run`, `bootstrap/schedule.go`\n- **Notifications** — multi-channel sender (mail + database store callback)\n- **Exception handler** — `app.UseExceptionHandler()` with HTML/JSON panic recovery\n- **Route cache** — `gofreight route:cache`, `GOFREIGHT_ROUTE_CACHE=1`\n- **REST `only` / `except`** — `router.ResourceOptions` on `Resources()` / `ApiResource()`\n- **Authorization gates** — model-aware `auth.Gate` with `Define`, `Allows`, `RequireGate`\n- **Vite integration** — `#vite` GFT directive, dev proxy, `app.UseVite()`\n- **Redis WebSocket broadcast** — `app.UseRedisBroadcast()` for multi-instance realtime\n- **Auth starter** — `gofreight make:auth` generates login/register views, routes, and controllers\n\n### Added — Documentation\n\n- **CLI commands** — in-depth reference with examples for every `gofreight` command (including `tinker`, migrations, queues, generators)\n- **Scheduling, notifications, storage, error handling** — new guides with honest capability notes\n- **Testing guide fixes** — correct `Describe(t, ...)` and `app.Draw()` usage\n\n---\n\n## 0.2.0 — September 6, 2026\n\n### Added\n\n- **GraphQL server** — modular schema modules, SDL string definitions (`GQL()`), DataLoader batching, GraphiQL playground, query depth/complexity limits, and production security defaults. See [GraphQL](graphql.md) and the [GraphQL tutorial](tutorial-graphql.md).\n- **Real-time WebSockets** — socket.io-style rooms, events, and broadcasts with a TypeScript client (`GofreightSocket`). See [Real-time WebSockets](realtime.md) and the [real-time tutorial](tutorial-realtime.md).\n- **Route groups** — prefix, middleware, and nested groups for clean API versioning. See [Routing](routing.md).\n- **JWT authentication guard** — protect API routes with bearer tokens. See [Authentication](authentication.md) and the [JWT tutorial](tutorial-auth-jwt.md).\n- **Vine schema validation** — declarative request validation for forms and JSON APIs. See [Forms & Validation](forms-validation.md).\n- **Production CLI guard** — mutating commands (`migrate`, `db:wipe`, `db:seed`, `make:*`, queue/cache clears, and more) show a red **PRODUCTION ENVIRONMENT** banner and require typing `yes` to continue when `GOFREIGHT_ENV=production`. Pass `--force` to skip the prompt in CI/deploy scripts.\n- **Documentation site** — full framework guides, six step-by-step tutorials, and searchable docs (see the `gofreight-web` repository).\n\n### Changed\n\n- **CLI help output** — running `gofreight` with no arguments shows the banner once; command categories use cyan headers, bold command names, and dimmed descriptions.\n- **CLI command list** — section heading is now **Available commands** (no duplicate framework title).\n\n### Fixed\n\n- **CLI banner** — removed duplicate Gofreight name, version, and tagline when invoking the root command.\n- **Docs site dark mode** — “Start building” CTA button text is readable on the orange banner in dark theme.\n\n---\n\n## 0.1.0 — September 5, 2026\n\nInitial public release — a batteries-included Go web framework you compile to a single binary.\n\n### Added\n\n- **HTTP routing** — RESTful resources (`Resources`, `ApiResource`), middleware pipeline, and named routes.\n- **Controllers & GFT templating** — MVC handlers and **Gofreight Templates** (`.gft`) with layouts, partials, and form helpers.\n- **ORM** — chainable queries, associations, validations, lifecycle callbacks, soft deletes, pagination, and transactions.\n- **Database layer** — migrations, SQL/Go seeders, blueprint DSL, multi-driver support (SQLite, PostgreSQL, MySQL), SQLite by default for new apps.\n- **CLI (`gofreight`)** — `new`, `serve`, `dev`, `migrate`, `make:*` generators, queue/cache/config commands, branded welcome banners, and `gofreight list` grouped by namespace.\n- **Authentication** — session login, password hashing, API tokens, OAuth helpers, email verification, and password reset tokens.\n- **Authorization** — policies and role-based middleware.\n- **API resources** — JSON serializers for REST responses.\n- **Jobs & queues** — background jobs with Redis queue driver and `queue:work`.\n- **Mail** — mailables and SMTP delivery.\n- **Cache** — in-memory and Redis stores, HTTP response caching, fragment caching.\n- **Sessions** — cookie sessions, flash messages, encrypted cookies.\n- **Service container** — dependency injection and service registration.\n- **Configuration** — `.env` loading, YAML config files, `APP_KEY` encryption, and structured database config.\n- **Testing (`gftest`)** — HTTP test helpers, factories, fakes, and database seeding for tests.\n- **Admin dashboard** — local-only database admin at `/admin` in development.\n- **Security** — CSRF, CORS, rate limiting, security headers, and maintenance mode (`gofreight down` / `up`).\n- **Generators** — scaffold full CRUD resources, models, controllers, migrations, mail, jobs, policies, factories, and auth scaffolding.\n- **Example apps** — `demoapp/` and `examples/blog/`.\n\n---\n\n## Upgrade notes\n\n### From 0.2.0 to 0.3.0\n\n1. Update the module version in your app's `go.mod`:\n\n   ```bash\n   go get github.com/lsgser/gofreight@v0.3.0\n   go mod tidy\n   ```\n\n2. Reinstall the CLI:\n\n   ```bash\n   go install github.com/lsgser/gofreight/cmd/gofreight@v0.3.0\n   ```\n\n3. **New apps** pick up file session/cache drivers, `bootstrap/schedule.go`, and `make:auth` starter automatically.\n\n4. **Existing apps** — optionally add `app.UseExceptionHandler()`, `app.UseVite()`, and Redis broadcast wiring from the [Application wiring](application-wiring.md) guide.\n\n### From 0.1.0 to 0.2.0\n\n1. Update the module version in your app’s `go.mod`:\n\n   ```bash\n   go get github.com/lsgser/gofreight@v0.2.0\n   go mod tidy\n   ```\n\n2. Reinstall the CLI:\n\n   ```bash\n   go install github.com/lsgser/gofreight/cmd/gofreight@v0.2.0\n   ```\n\n3. **Production deploys** — if you run CLI commands against production databases, add `--force` to non-interactive scripts (e.g. `gofreight migrate --force`) or expect the new confirmation prompt.\n\n4. **Optional** — add GraphQL or WebSockets using the new guides; existing REST and HTML apps continue to work unchanged.\n","../content/docs/commands.md":"# CLI commands\n\nGofreight ships a comprehensive CLI for scaffolding, migrations, queues, and day-to-day development. Run from your **application root** (where `main.go` and `.env` live).\n\n```bash\ngofreight list          # all commands grouped by namespace\ngofreight help migrate  # short help for one command\ngofreight               # banner + full command list\n```\n\nLegacy forms still work: `gofreight generate …`, `gofreight make …`, `gofreight db:migrate`, and `gofreight routes`.\n\n---\n\n## Production safety\n\nWhen `GOFREIGHT_ENV=production`, mutating commands (`migrate`, `db:wipe`, `tinker`, `make:*`, `queue:clear`, and others) show a red **PRODUCTION ENVIRONMENT** banner and require typing `yes` to continue.\n\nFor CI and deploy scripts, pass **`--force`** to skip the prompt:\n\n```bash\ngofreight migrate --force\ngofreight db:seed --force\n```\n\n---\n\n## Application commands\n\n### `gofreight new <name>`\n\nCreates a new Gofreight application in a folder named `<name>` with SQLite by default, route files, bootstrap wiring, `.env.example`, and starter views.\n\n```bash\ngofreight new blog\ncd blog\ngofreight key:generate\ngofreight db:create\ngofreight migrate\ngofreight serve\n```\n\n**What you get:** `main.go`, `bootstrap/app.go`, `routes/`, `app/`, `db/migrate/`, `public/`, `tests/`, and a branded welcome message with next steps.\n\n---\n\n### `gofreight serve`\n\nLoads `.env`, prints the development server banner (local URL and admin link in development), then runs `go run .`.\n\n```bash\ngofreight serve\n# Local   http://localhost:5000\n# Admin   http://localhost:5000/admin  (development only)\n```\n\nUse this for normal local development. The server reads `PORT` and `HOST` from `.env`.\n\n---\n\n### `gofreight dev [dir]` / `gofreight watch`\n\nRuns the app with **file watching**. When `.go`, `.html`, `.sql`, or `.css` files change under `dir` (default `.`), the dev server restarts automatically.\n\n```bash\ngofreight dev\ngofreight dev ./cmd   # watch a subdirectory only\n```\n\nEquivalent to `watch` (hidden alias). Uses `go run .` under the hood.\n\n---\n\n### `gofreight tinker` / `gofreight db` / `gofreight console`\n\nOpens an **interactive SQL console** connected to your application database. Loads `.env`, connects using `DATABASE_URL` / `DB_*` settings, then accepts SQL one statement at a time.\n\n```bash\ngofreight tinker\n```\n\n**Session example:**\n\n```\nGofreight console — type SQL and press Enter (exit to quit)\ngofreight> SELECT id, title FROM posts LIMIT 5;\nmap[id:1 title:Hello]\nmap[id:2 title:World]\ngofreight> INSERT INTO posts (title, body) VALUES ('Draft', 'Notes');\nOK\ngofreight> SELECT COUNT(*) AS n FROM posts;\nmap[n:3]\ngofreight> exit\n```\n\n**How it works:**\n\n1. Reads `.env` and resolves the database URL from config.\n2. Opens a connection via the framework ORM layer.\n3. Each line you type is executed with `database.ExecQuery`.\n4. `SELECT` results print as row maps; writes print `OK`.\n5. Type `exit` or `quit` to leave.\n\n**Tips:**\n\n- Run from your app root so `.env` is found.\n- Works with SQLite, PostgreSQL, and MySQL drivers configured in `.env`.\n- For complex exploration, prefer small `SELECT` queries; there is no transaction wrapper — `INSERT`/`UPDATE`/`DELETE` commit immediately.\n- Aliases: `gofreight db`, `gofreight console`.\n\n---\n\n### `gofreight test [packages]`\n\nRuns Go tests. Default: `go test ./...`. Pass package paths to narrow scope.\n\n```bash\ngofreight test\ngofreight test ./tests/...\ngofreight test ./app/models/...\n```\n\n---\n\n### `gofreight about`\n\nPrints framework version, current environment, working directory, and masked database URL.\n\n```bash\ngofreight about\n# Gofreight 0.3.0\n# Environment development\n# Path /Users/you/projects/blog\n# Database sqlite://***@/db/development.db\n```\n\n---\n\n### `gofreight env`\n\nPrints the current `GOFREIGHT_ENV` / `APP_ENV` value only (useful in shell scripts).\n\n```bash\ngofreight env\n# development\n```\n\n---\n\n### `gofreight down [message]` / `gofreight up`\n\n**Maintenance mode.** `down` writes `storage/framework/maintenance` with an optional custom message; middleware can serve a maintenance page. `up` removes that file.\n\n```bash\ngofreight down\ngofreight down Deploying v2.1 — back in 10 minutes\ngofreight up\n```\n\n---\n\n### `gofreight inspire`\n\nPrints a random programming quote (morale boost for long deploy days).\n\n```bash\ngofreight inspire\n```\n\n---\n\n### `gofreight list` / `gofreight help`\n\n- **`list`** — grouped, colorized command list in the terminal.\n- **`help <command>`** — description and usage for one command.\n\n```bash\ngofreight list\ngofreight list migrate    # filter by name or category\ngofreight help make:scaffold\n```\n\n---\n\n### `gofreight version` / `-v` / `--version`\n\nShows the branded Gofreight banner and installed CLI version.\n\n```bash\ngofreight version\ngofreight -v\n```\n\n---\n\n## Database commands\n\n### `gofreight db:create`\n\nCreates the database. For **SQLite**, creates the file and parent directories. For PostgreSQL/MySQL, prints driver info and reminds you to create the database on the server.\n\n```bash\n# .env\nDB_CONNECTION=sqlite\nDB_DATABASE=db/development.db\n\ngofreight db:create\n# Created SQLite database: db/development.db\n```\n\n---\n\n### `gofreight db:show`\n\nDisplays connection name, host, port, database name, driver, and masked URL.\n\n```bash\ngofreight db:show\n# Connection sqlite\n# Database db/development.db\n# Driver sqlite\n# URL sqlite://***@/db/development.db\n```\n\n---\n\n### `gofreight db:seed` / `gofreight db:seed --class=Name`\n\nSeeds the database in two passes:\n\n1. **SQL seeds** — runs all `*.sql` files in `db/seeds/`.\n2. **Go seeders** — runs `cmd/seed/main.go` if present (all registered seeders, or one with `--class`).\n\n```bash\ngofreight make:seeder DatabaseSeeder\n# register in cmd/seed/main.go, then:\ngofreight db:seed\ngofreight db:seed --class=DatabaseSeeder\n```\n\n**Example Go seeder** (`db/seeders/database_seeder.go`):\n\n```go\nfunc (s *DatabaseSeeder) Run(ctx context.Context) error {\n    _, err := database.DB().ExecContext(ctx,\n        `INSERT INTO users (email, password) VALUES (?, ?)`,\n        \"admin@example.com\", hashedPassword,\n    )\n    return err\n}\n```\n\n---\n\n### `gofreight db:wipe`\n\n**Destructive.** Drops all tables in the connected database. Use in development only.\n\n```bash\ngofreight db:wipe\n# Dropping all tables...\n# Done.\n```\n\nIn production, you must confirm or pass `--force`.\n\n---\n\n## Migration commands\n\nMigrations live in `db/migrate/` as numbered SQL files (e.g. `001_create_posts.sql`).\n\n### `gofreight migrate` / `gofreight db:migrate`\n\nRuns all **pending** migrations (tracks applied files in a migrations table). `db:migrate` is a legacy alias.\n\n```bash\ngofreight make:migration create_posts\n# edit db/migrate/001_create_posts.sql\ngofreight migrate\n# Running migrations...\n# Done.\n```\n\n---\n\n### `gofreight migrate:status`\n\nLists each migration file and whether it is **up** or **down**.\n\n```bash\ngofreight migrate:status\n# Migration                                Status\n# -------------------------------------------------------\n# 001_create_posts.sql                     up\n# 002_add_status_to_posts.sql              down\n```\n\nAlias: `gofreight db:status`.\n\n---\n\n### `gofreight migrate:rollback`\n\nRolls back the **last applied** migration only.\n\n```bash\ngofreight migrate:rollback\n```\n\nAlias: `gofreight db:rollback`.\n\n---\n\n### `gofreight migrate:reset`\n\nRolls back **all** migrations (empty schema, migration history cleared).\n\n```bash\ngofreight migrate:reset\n```\n\n---\n\n### `gofreight migrate:refresh`\n\nRolls back all migrations, then runs them again from scratch.\n\n```bash\ngofreight migrate:refresh\n```\n\n---\n\n### `gofreight migrate:fresh` / `migrate:fresh --seed`\n\n**Destructive.** Drops all tables, re-runs every migration, optionally seeds.\n\n```bash\ngofreight migrate:fresh\ngofreight migrate:fresh --seed\n```\n\nCommon local workflow after schema experiments:\n\n```bash\ngofreight migrate:fresh --seed --force   # in CI only\n```\n\n---\n\n## Make commands (generators)\n\nAll `make:*` commands accept **`name:type`** field pairs for models and scaffolds. See [Generators & field types](generators.md) for the full type reference.\n\nLegacy: `gofreight make scaffold Post title:string` or `gofreight generate model Post title:string`.\n\n### `gofreight make:model <Name> [fields]`\n\nCreates `app/models/<name>.go` and a migration.\n\n```bash\ngofreight make:model Post title:string body:text published:boolean\ngofreight migrate\n```\n\n---\n\n### `gofreight make:controller <Name>`\n\nCreates a REST-style controller skeleton in `app/controllers/`.\n\n```bash\ngofreight make:controller Posts\n```\n\n---\n\n### `gofreight make:migration <name>`\n\nCreates a timestamped SQL file in `db/migrate/` (empty up/down template).\n\n```bash\ngofreight make:migration add_status_to_posts\n# edit db/migrate/002_add_status_to_posts.sql\ngofreight migrate\n```\n\n---\n\n### `gofreight make:scaffold` / `make:resource`\n\nFull **HTML CRUD**: model, controller, GFT views, migration, factory, test, and route registration hint in `routes/web.go`.\n\n```bash\ngofreight make:scaffold Post title:string body:text status:enum:draft,published\ngofreight migrate\n# add controllers.RegisterPostRoutes(r) in routes/web.go if not auto-inserted\ngofreight serve\n# visit http://localhost:5000/posts\n```\n\n`make:resource` is an alias for `make:scaffold`.\n\n---\n\n### `gofreight make:api <Name> [fields]`\n\nJSON API controller + `app/resources/` serializer. Register routes in `routes/api.go` with `ApiResource`.\n\n```bash\ngofreight make:api Post title:string body:text\ngofreight migrate\n```\n\n---\n\n### `gofreight make:auth`\n\nInstalls a complete auth starter:\n\n- `User` model + migrations (password resets, API tokens, email verification column)\n- `app/controllers/auth_controller.go` — login, register, logout\n- `app/views/auth/login.gft` and `register.gft`\n- `routes/auth.go` wired into `routes/register.go`\n- `app/auth/users.go` — `FindUserByEmail`, `RegisterUser`\n- Seed snippet in `db/seeds/users.sql` (admin@example.com / `secret123`)\n\n```bash\ngofreight make:auth\ngofreight migrate\ngofreight db:seed\ngofreight serve\n# visit /login and /register\n```\n\n---\n\n### `gofreight make:graphql`\n\nInstalls GraphQL scaffolding:\n\n- `graphql/register.go` — mounts `/graphql` with playground\n- `graphql/modules.go` — module registry and loader wiring\n- `bootstrap/app.go` — calls `graphql.Mount(app)`\n- Adds `graphql-go` and `dataloader` to `go.mod`\n\n```bash\ngofreight make:graphql\ngofreight make:graphql-module Post title:string body:text\ngo mod tidy\ngofreight serve\n# visit /graphql/playground\n```\n\n---\n\n### `gofreight make:graphql-module <Name> [field:type ...]`\n\nGenerates a GraphQL module file (`graphql/<name>_module.go`) with list/show queries, a `create` mutation, and a dataloader. Registers the module in `graphql/modules.go`. Runs `make:graphql` first if the folder does not exist yet.\n\n```bash\ngofreight make:graphql-module User name:string email:email\ngofreight make:graphql-module Post title:string body:text author_id:references:users\n```\n\n---\n\n### `gofreight make:service <Name>`\n\nBusiness logic class in `app/services/`.\n\n```bash\ngofreight make:service PostPublishing\n# register in bootstrap/app.go:\n# app.Singleton(\"postPublishing\", func() any { return services.NewPostPublishingService() })\n```\n\n---\n\n### `gofreight make:mail` / `make:mailable <Name>`\n\nMailable class + GFT email view.\n\n```bash\ngofreight make:mail WelcomeEmail\ngofreight make:mailable OrderShipped   # alias\n```\n\n---\n\n### `gofreight make:job <Name>`\n\nQueueable job in `app/jobs/`, registered by name for Redis workers.\n\n```bash\ngofreight make:job SendNewsletter\n# dispatch from app code; process with gofreight queue:work\n```\n\n---\n\n### `gofreight make:middleware <Name>`\n\nHTTP middleware in `app/middleware/`.\n\n```bash\ngofreight make:middleware RequestLogger\n# register in bootstrap/app.go or on route groups\n```\n\n---\n\n### `gofreight make:policy <Name>`\n\nAuthorization policy in `app/policies/`.\n\n```bash\ngofreight make:policy PostPolicy\n```\n\n---\n\n### `gofreight make:request <Name>`\n\nForm request / Vine validator in `app/requests/`.\n\n```bash\ngofreight make:request StorePostRequest\n```\n\n---\n\n### `gofreight make:seeder <Name>`\n\nGo seeder in `db/seeders/` and `cmd/seed/main.go` (first run only).\n\n```bash\ngofreight make:seeder DatabaseSeeder\ngofreight db:seed --class=DatabaseSeeder\n```\n\n---\n\n### `gofreight make:factory <Name>`\n\nTest factory with faker defaults in `tests/factories/`.\n\n```bash\ngofreight make:factory Post\n```\n\n---\n\n### `gofreight make:test <Name>`\n\nHTTP feature test skeleton in `tests/`.\n\n```bash\ngofreight make:test Posts\n```\n\n---\n\n## Queue commands (Redis)\n\nRequires `REDIS_URL` or `REDIS_HOST` in `.env`. Default queue key: `gofreight:jobs`.\n\n### `gofreight queue:work [--queue=key]`\n\nLong-running worker. Processes one job at a time until Ctrl+C.\n\n```bash\n# .env\nREDIS_URL=redis://127.0.0.1:6379/0\nQUEUE_DRIVER=redis\n\ngofreight queue:work\ngofreight queue:work --queue=emails\n```\n\nStart this in a separate terminal alongside `gofreight serve`.\n\n---\n\n### `gofreight queue:failed`\n\nLists failed jobs with ID, name, attempt count, and exception message.\n\n```bash\ngofreight queue:failed\n# abc123  SendNewsletter  attempts=3  connection refused\n```\n\n---\n\n### `gofreight queue:retry <id>`\n\nRe-queues a single failed job by ID.\n\n```bash\ngofreight queue:retry abc123\n```\n\n---\n\n### `gofreight queue:flush`\n\nRemoves all **failed** job records from the failed queue.\n\n```bash\ngofreight queue:flush\n```\n\n---\n\n### `gofreight queue:clear`\n\nRemoves all **pending** jobs from the queue (does not run them).\n\n```bash\ngofreight queue:clear\n```\n\n---\n\n## Routes, cache, views, config\n\n### `gofreight route:list`\n\nScans `routes/*.go` and prints method + pattern lines found in source (static analysis, not a live router dump).\n\n```bash\ngofreight route:list\n# METHOD  PATTERN\n# GET     /\n# GET     /posts\n# POST    /posts\n```\n\nLegacy alias: `gofreight routes`.\n\n---\n\n### `gofreight route:clear`\n\nDeletes `bootstrap/cache/routes.gob` if present.\n\n```bash\ngofreight route:clear\n```\n\n---\n\n### `gofreight cache:clear`\n\nClears files under `storage/framework/cache/`.\n\n```bash\ngofreight cache:clear\n```\n\n---\n\n### `gofreight view:clear`\n\nClears compiled GFT views under `storage/framework/views/`.\n\n```bash\ngofreight view:clear\n```\n\nUse after editing `.gft` templates if cached views look stale.\n\n---\n\n### `gofreight config:show [key]`\n\nPrints loaded configuration. Secrets are masked.\n\n```bash\ngofreight config:show\ngofreight config:show environment\ngofreight config:show database_url\ngofreight config:show port\n```\n\nSupported keys: `environment`, `env`, `host`, `port`, `database_url`, `database`, `db_connection`, `db_database`, `log_level`, `app_key`, `secret_key`.\n\n---\n\n### `gofreight key:generate [--show] [--force]`\n\nGenerates a random `APP_KEY` and writes it to `.env`. Required for sessions, CSRF, and encrypted cookies.\n\n```bash\ngofreight key:generate\ngofreight key:generate --show    # print only, do not write\ngofreight key:generate --force   # overwrite existing key\n```\n\nRun once after `gofreight new`. Never commit production keys.\n\n---\n\n### `gofreight optimize` / `gofreight optimize:clear`\n\nWrites or clears a bootstrap cache marker under `bootstrap/cache/` (production performance hint).\n\n```bash\ngofreight optimize\ngofreight optimize:clear\n```\n\n---\n\n### `gofreight auth:clear-resets`\n\nDeletes expired rows from `password_reset_tokens` (when the table exists).\n\n```bash\ngofreight auth:clear-resets\n```\n\nSchedule periodically in production or run after auth-heavy releases.\n\n---\n\n## Schedule commands\n\n### `gofreight schedule:run`\n\nBoots the app with `GOFREIGHT_SCHEDULE_RUN=1`, executes due tasks from `bootstrap/schedule.go`, and exits.\n\n```bash\ngofreight schedule:run\n```\n\n**Cron example:**\n\n```cron\n* * * * * cd /path/to/app && gofreight schedule:run\n```\n\n### `gofreight schedule:list`\n\nPrints a reminder that tasks are defined in `bootstrap/schedule.go`. See [Scheduling](scheduling.md).\n\n---\n\n## Route cache\n\n### `gofreight route:cache`\n\nWrites route metadata to `bootstrap/cache/routes.json` for faster URL generation.\n\n```bash\ngofreight route:cache\n```\n\nRuns the app with `GOFREIGHT_ROUTE_CACHE=1` and exits after writing the cache file.\n\n---\n\n## End-to-end workflows\n\n### New app from zero\n\n```bash\ngofreight new shop\ncd shop\ngofreight key:generate\ngofreight db:create\ngofreight migrate\ngofreight make:scaffold Product name:string price:float\ngofreight migrate\ngofreight serve\n```\n\n### Debug data with tinker\n\n```bash\ngofreight tinker\ngofreight> SELECT * FROM products WHERE price > 10;\ngofreight> UPDATE products SET price = 9.99 WHERE id = 1;\ngofreight> exit\n```\n\n### Reset local database\n\n```bash\ngofreight migrate:fresh --seed\n```\n\n### Background jobs\n\n```bash\n# terminal 1\ngofreight serve\n\n# terminal 2\ngofreight queue:work\n```\n\n---\n\n## Legacy command forms\n\nOlder tutorials and scripts may use these equivalents:\n\n| Legacy | Modern |\n|--------|--------|\n| `gofreight generate model Post title:string` | `gofreight make:model Post title:string` |\n| `gofreight make scaffold Post title:string` | `gofreight make:scaffold Post title:string` |\n| `gofreight db:migrate` | `gofreight migrate` |\n| `gofreight routes` | `gofreight route:list` |\n| `gofreight db` | `gofreight tinker` |\n\nThe `generate` and `make` commands (without colon) dispatch to the same generators as `make:*`.\n\n---\n\n## Related guides\n\n- [Generators & field types](generators.md) — full `name:type` reference\n- [Database & migrations](database.md) — blueprint DSL and seeders\n- [Jobs & queues](jobs.md) — dispatching and workers\n- [Routing](routing.md) — route groups and API resources\n- [Getting started](getting-started.md) — install the CLI\n","../content/docs/configuration.md":'# Configuration\n\nGofreight loads configuration from environment variables, `.env` files, and layered YAML config files. Environment variables always take precedence.\n\n## Environment variables\n\nEvery new app includes a `.env` file. Key variables:\n\n| Variable | Default | Purpose |\n|----------|---------|---------|\n| `APP_NAME` | `Gofreight` | Application name |\n| `APP_KEY` | — | Encryption/signing key (sessions, JWT, CSRF) |\n| `APP_URL` | `http://localhost:5000` | Base URL |\n| `APP_DEBUG` | `true` | Debug mode |\n| `GOFREIGHT_ENV` | `development` | `development`, `test`, or `production` |\n| `PORT` | `5000` | HTTP port |\n| `HOST` | `0.0.0.0` | Bind address |\n| `DB_CONNECTION` | `sqlite` | `sqlite`, `pgsql`, `mysql`, `mariadb` |\n| `DB_HOST` | `127.0.0.1` | Database host |\n| `DB_PORT` | — | `5432` (Postgres) or `3306` (MySQL) |\n| `DB_DATABASE` | — | Database name |\n| `DB_USERNAME` | — | Database user |\n| `DB_PASSWORD` | — | Database password |\n| `DB_SSLMODE` | `disable` | Postgres SSL mode |\n| `DATABASE_URL` | — | Full connection URL (overrides `DB_*`) |\n| `SESSION_DRIVER` | `file` | `file`, `redis`, or `memory` |\n| `CACHE_STORE` | `file` | `file`, `redis`, or in-memory default |\n| `QUEUE_DRIVER` / `QUEUE_CONNECTION` | `sync` | `sync` (in-process), `redis` |\n| `FILESYSTEM_DISK` | `local` | `local` filesystem disk (`storage/app`) |\n| `STORAGE_LOCAL_ROOT` | `storage/app` | Root path for local disk |\n| `VITE_DEV_SERVER_URL` | `http://localhost:5173` | Vite dev server (when `public/hot` exists) |\n| `REDIS_URL` | — | Redis for sessions, cache, queue, WebSocket broadcast |\n| `JWT_TTL` | `24h` | JWT token lifetime |\n| `LOG_LEVEL` | `info` | Log verbosity |\n| `MAIL_DRIVER` | `log` | `log`, `smtp`, `sendgrid` |\n| `MAIL_FROM` | — | Default sender address |\n\nRun `gofreight key:generate` after scaffolding to set a unique `APP_KEY`.\n\n## YAML config files\n\nLayered YAML in `config/`:\n\n```\nconfig/\n├── app.yaml           # Base settings\n├── development.yaml   # Development overrides\n├── production.yaml    # Production overrides\n└── test.yaml          # Test overrides\n```\n\nExample `config/app.yaml`:\n\n```yaml\napp_name: myapp\nport: 5000\nlog_level: info\n```\n\nEnvironment-specific files merge on top. Keys map to env vars via `ApplyEnv`:\n\n```go\nfiles.ApplyEnv(map[string]string{\n    "PORT":    "port",\n    "APP_KEY": "app_key",\n})\n```\n\n## Loading config\n\n`application.New()` calls `config.Load()` automatically:\n\n```go\napp := application.New()\napp.Config.AppName   // from APP_NAME or YAML\napp.Config.Port      // from PORT or YAML\napp.Config.AppKey    // from APP_KEY\napp.Config.DatabaseURL\n```\n\nInspect resolved config:\n\n```bash\ngofreight config:show\ngofreight config:show database\n```\n\n## Database configuration\n\nDiscrete `DB_*` variables (recommended):\n\n```env\nDB_CONNECTION=pgsql\nDB_HOST=127.0.0.1\nDB_PORT=5432\nDB_DATABASE=myapp\nDB_USERNAME=postgres\nDB_PASSWORD=secret\nDB_SSLMODE=disable\n```\n\nOr a single URL:\n\n```env\nDATABASE_URL=postgres://user:pass@localhost:5432/myapp?sslmode=disable\n```\n\nResolution order: `DATABASE_URL` → `DB_URL` → built from `DB_*`.\n\nSee **[ORM](orm.md#database-configuration)** and **[Database](database.md)**.\n\n## Integrations via env\n\nMail, cache, and local storage drivers are configured through environment variables. See **[Integrations](integrations.md)** and **[Storage](storage.md)**.\n\n```env\nMAIL_DRIVER=smtp\nMAIL_HOST=smtp.example.com\nMAIL_PORT=587\n\nSESSION_DRIVER=file\nCACHE_STORE=file\nFILESYSTEM_DISK=local\n\n# Optional — enables Redis sessions, cache, queue, and WebSocket broadcast\nREDIS_URL=redis://127.0.0.1:6379\n```\n\n> **Honest defaults:** New apps scaffold with **file** sessions and cache. Cloud storage (S3) is not a built-in driver yet — use the local disk or wire a custom integration.\n\n## Bootstrap wiring\n\nUse `bootstrap/app.go` to configure the application based on config:\n\n```go\nfunc Application() *application.Application {\n    app := application.New()\n\n    if os.Getenv("SESSION_DRIVER") == "redis" {\n        _ = app.UseRedisSessions(os.Getenv("REDIS_URL"))\n    }\n    if os.Getenv("QUEUE_DRIVER") == "redis" {\n        _ = app.UseRedisQueue(os.Getenv("REDIS_URL"))\n    }\n\n    app.UseCSRF()\n    _ = app.ConfigureIntegrations()\n\n    return app\n}\n```\n\n## Production checklist\n\n- Set `GOFREIGHT_ENV=production`\n- Set `APP_DEBUG=false`\n- Run `gofreight key:generate` and keep `APP_KEY` secret\n- Use PostgreSQL or MySQL instead of SQLite\n- Set `SESSION_DRIVER=redis` for multi-process deployments\n- Never commit `.env` — use `.env.example` as a template\n\nSee **[Deployment](deployment.md)** and **[Security](security.md)**.\n\n## Related\n\n- [Database](database.md) — migrations and seeding\n- [Integrations](integrations.md) — mail, storage, cache drivers\n- [Getting Started](getting-started.md) — first app setup\n',"../content/docs/controllers.md":`# Controllers
 
 Controllers handle HTTP requests and return responses — HTML views, JSON, redirects, or errors. Each resource gets a struct with action methods bound via \`controller.Handler\`.
 
@@ -3457,7 +2653,7 @@ The router supports these patterns out of the box:
 | CLI commands | [CLI Commands](commands.md) |
 | Code generators | [Generators](generators.md) |
 | HTTP & database testing | [Testing](testing.md) |
-| Dev database admin | [Admin Dashboard](admin.md) |
+| Dev database admin | [Admin Dashboard](admin.md) — phpMyAdmin-style browser UI |
 | Date/time helpers | [Date & Time](datetime.md) |
 | Custom integrations & events | [Extending](extending.md) |
 | Docker & production | [Deployment](deployment.md) |
@@ -3613,7 +2809,7 @@ app.UseCSRF()
 - Redirect-back on validation failure
 
 See also: [Templating](templating.md), [Routing](routing.md).
-`,"../content/docs/generators.md":'# Generators & field types\n\nGofreight generators accept fields as `name:type` pairs:\n\n```bash\ngofreight make:scaffold Article title:string body:text status:enum:draft,published price:float published:boolean\n```\n\nUse **`gofreight make:scaffold`**, **`gofreight make:model`**, or **`gofreight make:resource`** — they share the same field type vocabulary.\n\n---\n\n## Field type reference\n\n| CLI type | Aliases | Go type | SQL (SQLite default) | Scaffold form |\n|----------|---------|---------|----------------------|---------------|\n| `string` | `str` | `string` | `VARCHAR(255)` | text input |\n| `text` | — | `string` | `TEXT` | textarea |\n| `email` | — | `string` | `VARCHAR(255)` | email input |\n| `url` | — | `string` | `VARCHAR(512)` | url input |\n| `integer` | `int` | `int` | `INTEGER` | number input |\n| `bigint` | — | `int64` | `INTEGER` | number input |\n| `float` | `decimal`, `double` | `float64` | `REAL` | number input |\n| `boolean` | `bool` | `bool` | `INTEGER` (0/1) | checkbox |\n| `datetime` | `timestamp` | `string` | `TEXT` | datetime-local input |\n| `date` | — | `string` | `TEXT` | date input |\n| `time` | — | `string` | `TEXT` | time input |\n| `uuid` | — | `string` | `TEXT` | text input |\n| `json` | `jsonb` | `string` | `TEXT` | textarea |\n| `enum` | — | `string` | `TEXT` + `CHECK (...)` | `<select>` dropdown |\n| `references` | `reference`, `belongs_to` | `int64` | `INTEGER` | number input (foreign key id) |\n\n> **Note:** New apps use **SQLite** by default. Types map cleanly to SQLite; PostgreSQL and MySQL accept the same migration SQL in most cases (`REAL`, `TEXT`, `INTEGER`, `VARCHAR`).\n\n---\n\n## Examples by type\n\n### Strings & text\n\n```bash\ngofreight make:scaffold Post title:string slug:str body:text summary:text\n```\n\n### Numbers\n\n```bash\ngofreight make:scaffold Product name:string sku:string price:float stock:integer legacy_id:bigint\n```\n\n### Booleans\n\n```bash\ngofreight make:scaffold Post title:string published:boolean featured:bool\n```\n\n### Dates & times\n\nStored as `TEXT` in SQLite (ISO-8601 strings). Use `datetime`, `date`, or `time`:\n\n```bash\ngofreight make:scaffold Event name:string starts_on:date opens_at:time published_at:datetime\n```\n\n### Email & URL\n\n```bash\ngofreight make:scaffold Contact name:string email:email website:url\n```\n\n### JSON\n\nStored as `TEXT`; validate/parse in application code:\n\n```bash\ngofreight make:scaffold Setting key:string metadata:json config:jsonb\n```\n\n### Enums\n\nComma-separated allowed values. Generates a `CHECK` constraint and a `<select>` in forms:\n\n```bash\ngofreight make:scaffold Article title:string status:enum:draft,published,archived\n```\n\nMigration column:\n\n```sql\nstatus TEXT NOT NULL CHECK (status IN (\'draft\', \'published\', \'archived\')),\n```\n\n### Foreign keys (`references`)\n\nUse for `belongs_to` associations. Column name should follow `*_id` convention:\n\n```bash\ngofreight make:scaffold Comment body:text post_id:references:posts author_id:belongs_to:users\n```\n\nSyntax:\n\n- `post_id:references:posts`\n- `post_id:reference:posts`\n- `user_id:belongs_to:users`\n\nGenerates `INTEGER NOT NULL` and a number input in forms. Add explicit `FOREIGN KEY` constraints in migrations manually if required.\n\n### UUID\n\n```bash\ngofreight make:scaffold ApiToken name:string token:uuid\n```\n\n---\n\n## Full scaffold example\n\n```bash\ngofreight make:scaffold Article \\\n  title:string \\\n  slug:string \\\n  body:text \\\n  status:enum:draft,published,archived \\\n  published:boolean \\\n  views:integer \\\n  price:float \\\n  published_at:datetime \\\n  metadata:json\n```\n\nCreates:\n\n| Output | Description |\n|--------|-------------|\n| `app/models/article.go` | Model + presence validators |\n| `app/controllers/article_controller.go` | REST controller |\n| `app/views/articles/*.gft` | GFT views (enum → select, text → textarea, etc.) |\n| `db/migrate/NNN_create_articles.sql` | SQLite migration |\n| `tests/article_test.go` | HTTP tests |\n| `tests/factories/article_factory.go` | Test factory with **faker** defaults |\n| Route registration in `routes/web.go` | REST routes (`Resources`) |\n\nFor JSON APIs, use `gofreight make:api` and register with `ApiResource` in `routes/api.go`. See [Routing](routing.md).\n\n---\n\n## Routing generated resources\n\n### Web (HTML)\n\nScaffold adds REST routes to `routes/web.go`:\n\n```go\nr.Resources("articles", router.ResourceHandlers{\n    Index: controller.Handler(c.Index),\n    // ...\n})\n```\n\n### API (JSON)\n\n`make:api` creates a controller and resource. Register in `routes/api.go`:\n\n```go\nr.ApiResource("articles", router.ApiResourceHandlers{\n    Index:   controller.Handler(c.Index),\n    Store:   controller.Handler(c.Store),\n    Show:    controller.Handler(c.Show),\n    Update:  controller.Handler(c.Update),\n    Destroy: controller.Handler(c.Destroy),\n})\n```\n\nThe `/api/v1` prefix is applied in `routes/register.go` via route groups. See [Routing](routing.md).\n\n---\n\n## Syntax rules\n\n| Rule | Example |\n|------|---------|\n| Field format | `name:type` |\n| Enum values | `name:enum:value1,value2,value3` |\n| Foreign key | `post_id:references:posts` |\n| Unknown type | Falls back to `string` / `VARCHAR(255)` |\n\nField names are lowercased for database columns (`title` → `db:"title"`) and title-cased for Go struct fields (`Title`).\n\n---\n\n## Generators\n\n| Command | Description |\n|---------|-------------|\n| `gofreight make:scaffold Name fields...` | Full CRUD (recommended) |\n| `gofreight make:model Name fields...` | Model + migration only |\n| `gofreight make:controller Name` | Controller only |\n| `gofreight make:migration name` | Empty migration stub |\n| `gofreight make:api Name fields...` | JSON API controller + resource |\n| `gofreight make:service Name` | Service class in `app/services/` |\n| `gofreight make:mail Name` | Mailable + view in `app/mail/` |\n| `gofreight make:job Name` | Job class in `app/jobs/` |\n| `gofreight make:middleware Name` | Middleware in `app/middleware/` |\n| `gofreight make:policy Name` | Policy in `app/policies/` |\n| `gofreight make:request Name` | Form request in `app/requests/` |\n| `gofreight make:seeder Name` | Go seeder in `db/seeders/` |\n| `gofreight make:factory Name` | Test factory in `tests/factories/` |\n| `gofreight make:test Name` | Feature test in `tests/` |\n| `gofreight make:auth` | User model, login/register views, auth controller, routes |\n\nLegacy: `gofreight generate …` and `gofreight make …` work the same way (`generate resource` = `make:scaffold`). Run **`gofreight list make`** for the full list. See [commands.md](commands.md).\n\n### Services\n\nKeep controllers thin — put business logic in services:\n\n```bash\ngofreight make service PaymentProcessing\n# → app/services/payment_processing_service.go\n```\n\nUse in a controller:\n\n```go\nimport "{{module}}/app/services"\n\nsvc := services.NewPaymentProcessingService()\n// svc.Process(...)\n```\n\nSee also [Getting Started](getting-started.md), [Project structure](project-structure.md), and [ORM](orm.md).\n',"../content/docs/getting-started.md":`# Getting Started
+`,"../content/docs/generators.md":'# Generators & field types\n\nGofreight generators accept fields as `name:type` pairs:\n\n```bash\ngofreight make:scaffold Article title:string body:text status:enum:draft,published price:float published:boolean\n```\n\nUse **`gofreight make:scaffold`**, **`gofreight make:model`**, or **`gofreight make:resource`** — they share the same field type vocabulary.\n\n---\n\n## Field type reference\n\n| CLI type | Aliases | Go type | SQL (SQLite default) | Scaffold form |\n|----------|---------|---------|----------------------|---------------|\n| `string` | `str` | `string` | `VARCHAR(255)` | text input |\n| `text` | — | `string` | `TEXT` | textarea |\n| `email` | — | `string` | `VARCHAR(255)` | email input |\n| `url` | — | `string` | `VARCHAR(512)` | url input |\n| `integer` | `int` | `int` | `INTEGER` | number input |\n| `bigint` | — | `int64` | `INTEGER` | number input |\n| `float` | `decimal`, `double` | `float64` | `REAL` | number input |\n| `boolean` | `bool` | `bool` | `INTEGER` (0/1) | checkbox |\n| `datetime` | `timestamp` | `string` | `TEXT` | datetime-local input |\n| `date` | — | `string` | `TEXT` | date input |\n| `time` | — | `string` | `TEXT` | time input |\n| `uuid` | — | `string` | `TEXT` | text input |\n| `json` | `jsonb` | `string` | `TEXT` | textarea |\n| `enum` | — | `string` | `TEXT` + `CHECK (...)` | `<select>` dropdown |\n| `references` | `reference`, `belongs_to` | `int64` | `INTEGER` | number input (foreign key id) |\n\n> **Note:** New apps use **SQLite** by default. Types map cleanly to SQLite; PostgreSQL and MySQL accept the same migration SQL in most cases (`REAL`, `TEXT`, `INTEGER`, `VARCHAR`).\n\n---\n\n## Examples by type\n\n### Strings & text\n\n```bash\ngofreight make:scaffold Post title:string slug:str body:text summary:text\n```\n\n### Numbers\n\n```bash\ngofreight make:scaffold Product name:string sku:string price:float stock:integer legacy_id:bigint\n```\n\n### Booleans\n\n```bash\ngofreight make:scaffold Post title:string published:boolean featured:bool\n```\n\n### Dates & times\n\nStored as `TEXT` in SQLite (ISO-8601 strings). Use `datetime`, `date`, or `time`:\n\n```bash\ngofreight make:scaffold Event name:string starts_on:date opens_at:time published_at:datetime\n```\n\n### Email & URL\n\n```bash\ngofreight make:scaffold Contact name:string email:email website:url\n```\n\n### JSON\n\nStored as `TEXT`; validate/parse in application code:\n\n```bash\ngofreight make:scaffold Setting key:string metadata:json config:jsonb\n```\n\n### Enums\n\nComma-separated allowed values. Generates a `CHECK` constraint and a `<select>` in forms:\n\n```bash\ngofreight make:scaffold Article title:string status:enum:draft,published,archived\n```\n\nMigration column:\n\n```sql\nstatus TEXT NOT NULL CHECK (status IN (\'draft\', \'published\', \'archived\')),\n```\n\n### Foreign keys (`references`)\n\nUse for `belongs_to` associations. Column name should follow `*_id` convention:\n\n```bash\ngofreight make:scaffold Comment body:text post_id:references:posts author_id:belongs_to:users\n```\n\nSyntax:\n\n- `post_id:references:posts`\n- `post_id:reference:posts`\n- `user_id:belongs_to:users`\n\nGenerates `INTEGER NOT NULL` and a number input in forms. Add explicit `FOREIGN KEY` constraints in migrations manually if required.\n\n### UUID\n\n```bash\ngofreight make:scaffold ApiToken name:string token:uuid\n```\n\n---\n\n## Full scaffold example\n\n```bash\ngofreight make:scaffold Article \\\n  title:string \\\n  slug:string \\\n  body:text \\\n  status:enum:draft,published,archived \\\n  published:boolean \\\n  views:integer \\\n  price:float \\\n  published_at:datetime \\\n  metadata:json\n```\n\nCreates:\n\n| Output | Description |\n|--------|-------------|\n| `app/models/article.go` | Model + presence validators |\n| `app/controllers/article_controller.go` | REST controller |\n| `app/views/articles/*.gft` | GFT views (enum → select, text → textarea, etc.) |\n| `db/migrate/NNN_create_articles.sql` | SQLite migration |\n| `tests/article_test.go` | HTTP tests |\n| `tests/factories/article_factory.go` | Test factory with **faker** defaults |\n| Route registration in `routes/web.go` | REST routes (`Resources`) |\n\nFor JSON APIs, use `gofreight make:api` and register with `ApiResource` in `routes/api.go`. See [Routing](routing.md).\n\n---\n\n## Routing generated resources\n\n### Web (HTML)\n\nScaffold adds REST routes to `routes/web.go`:\n\n```go\nr.Resources("articles", router.ResourceHandlers{\n    Index: controller.Handler(c.Index),\n    // ...\n})\n```\n\n### API (JSON)\n\n`make:api` creates a controller and resource. Register in `routes/api.go`:\n\n```go\nr.ApiResource("articles", router.ApiResourceHandlers{\n    Index:   controller.Handler(c.Index),\n    Store:   controller.Handler(c.Store),\n    Show:    controller.Handler(c.Show),\n    Update:  controller.Handler(c.Update),\n    Destroy: controller.Handler(c.Destroy),\n})\n```\n\nThe `/api/v1` prefix is applied in `routes/register.go` via route groups. See [Routing](routing.md).\n\n---\n\n## Syntax rules\n\n| Rule | Example |\n|------|---------|\n| Field format | `name:type` |\n| Enum values | `name:enum:value1,value2,value3` |\n| Foreign key | `post_id:references:posts` |\n| Unknown type | Falls back to `string` / `VARCHAR(255)` |\n\nField names are lowercased for database columns (`title` → `db:"title"`) and title-cased for Go struct fields (`Title`).\n\n---\n\n## Generators\n\n| Command | Description |\n|---------|-------------|\n| `gofreight make:scaffold Name fields...` | Full CRUD (recommended) |\n| `gofreight make:model Name fields...` | Model + migration only |\n| `gofreight make:controller Name` | Controller only |\n| `gofreight make:migration name` | Empty migration stub |\n| `gofreight make:api Name fields...` | JSON API controller + resource |\n| `gofreight make:service Name` | Service class in `app/services/` |\n| `gofreight make:mail Name` | Mailable + view in `app/mail/` |\n| `gofreight make:job Name` | Job class in `app/jobs/` |\n| `gofreight make:middleware Name` | Middleware in `app/middleware/` |\n| `gofreight make:policy Name` | Policy in `app/policies/` |\n| `gofreight make:request Name` | Form request in `app/requests/` |\n| `gofreight make:seeder Name` | Go seeder in `db/seeders/` |\n| `gofreight make:factory Name` | Test factory in `tests/factories/` |\n| `gofreight make:test Name` | Feature test in `tests/` |\n| `gofreight make:auth` | User model, login/register views, auth controller, routes |\n| `gofreight make:graphql` | GraphQL folder, bootstrap mount, go.mod deps |\n| `gofreight make:graphql-module Name fields...` | GraphQL module with list/show/create + dataloader |\n\nLegacy: `gofreight generate …` and `gofreight make …` work the same way (`generate resource` = `make:scaffold`). Run **`gofreight list make`** for the full list. See [commands.md](commands.md).\n\n### GraphQL\n\nInstall the GraphQL endpoint once, then generate modules as you add resources:\n\n```bash\ngofreight make:graphql\ngofreight make:graphql-module Post title:string body:text author_id:references:users\ngo mod tidy\ngofreight serve\n# → http://localhost:5000/graphql/playground\n```\n\nThis creates `graphql/register.go`, `graphql/modules.go`, wires `graphql.Mount(app)` in `bootstrap/app.go`, and adds each module under `graphql/<name>_module.go` with queries, a create mutation, and a dataloader. See [GraphQL](graphql.md) and [tutorial-graphql.md](tutorial-graphql.md).\n\n### Services\n\nKeep controllers thin — put business logic in services:\n\n```bash\ngofreight make service PaymentProcessing\n# → app/services/payment_processing_service.go\n```\n\nUse in a controller:\n\n```go\nimport "{{module}}/app/services"\n\nsvc := services.NewPaymentProcessingService()\n// svc.Process(...)\n```\n\nSee also [Getting Started](getting-started.md), [Project structure](project-structure.md), and [ORM](orm.md).\n',"../content/docs/getting-started.md":`# Getting Started
 
 Install the Gofreight CLI, scaffold an app, and understand the core concepts in under ten minutes.
 
@@ -3917,7 +3113,20 @@ Gofreight includes a modular GraphQL server with reusable schema modules, SDL st
 
 ## Quick start
 
-### Option A — SDL strings (recommended)
+### Option A — CLI generators (fastest)
+
+\`\`\`bash
+gofreight make:graphql
+gofreight make:graphql-module Post title:string body:text
+gofreight make:graphql-module User name:string email:email
+go mod tidy
+gofreight serve
+# → http://localhost:5000/graphql/playground
+\`\`\`
+
+This scaffolds \`graphql/register.go\`, \`graphql/modules.go\`, and per-resource module files with list/show queries, create mutations, and dataloaders. See [Generators](generators.md#graphql).
+
+### Option B — SDL strings (manual)
 
 Define your schema in GraphQL SDL and bind Go resolvers:
 
@@ -9258,11 +8467,23 @@ This tutorial builds a posts API with Gofreight GraphQL — schema defined in SD
 
 ## Prerequisites
 
-A running Gofreight app (\`gofreight new myapp && gofreight serve\`). Add the GraphQL module files below under \`app/graphql/\`.
+A running Gofreight app (\`gofreight new myapp && gofreight serve\`).
+
+**Fast path:** use the generators instead of creating files by hand:
+
+\`\`\`bash
+gofreight make:graphql
+gofreight make:graphql-module User name:string email:email
+gofreight make:graphql-module Post title:string body:text author_id:references:users
+go mod tidy
+gofreight serve
+\`\`\`
+
+The steps below show the manual SDL approach under \`graphql/\` for full control.
 
 ## Step 1 — Define schema in SDL
 
-Create \`app/graphql/schema.go\` with your type definitions as GraphQL strings:
+Create \`graphql/schema.go\` with your type definitions as GraphQL strings:
 
 \`\`\`go
 package graphql
@@ -10399,7 +9620,7 @@ curl -X DELETE http://localhost:5000/api/v1/posts/1
 `,inConstruct:`tableCell`},{atBreak:!0,character:`|`,after:`[	 :-]`},{character:`|`,inConstruct:`tableCell`},{atBreak:!0,character:`:`,after:`-`},{atBreak:!0,character:`-`,after:`[:|-]`}],handlers:{inlineCode:f,table:o,tableCell:c,tableRow:s}};function o(e,t,n,r){return l(u(e,n,r),e.align)}function s(e,t,n,r){let i=l([d(e,n,r)]);return i.slice(0,i.indexOf(`
 `))}function c(e,t,n,r){let i=n.enter(`tableCell`),o=n.enter(`phrasing`),s=n.containerPhrasing(e,{...r,before:a,after:a});return o(),i(),s}function l(e,t){return Yu(e,{align:t,alignDelimiters:r,padding:n,stringLength:i})}function u(e,t,n){let r=e.children,i=-1,a=[],o=t.enter(`table`);for(;++i<r.length;)a[i]=d(r[i],t,n);return o(),a}function d(e,t,n){let r=e.children,i=-1,a=[],o=t.enter(`tableRow`);for(;++i<r.length;)a[i]=c(r[i],e,t,n);return o(),a}function f(e,t,n){let r=Wd.inlineCode(e,t,n);return n.stack.includes(`tableCell`)&&(r=r.replace(/\|/g,`\\$&`)),r}}function ef(){return{exit:{taskListCheckValueChecked:nf,taskListCheckValueUnchecked:nf,paragraph:rf}}}function tf(){return{unsafe:[{atBreak:!0,character:`-`,after:`[:|-]`}],handlers:{listItem:af}}}function nf(e){let t=this.stack[this.stack.length-2];t.type,t.checked=e.type===`taskListCheckValueChecked`}function rf(e){let t=this.stack[this.stack.length-2];if(t&&t.type===`listItem`&&typeof t.checked==`boolean`){let e=this.stack[this.stack.length-1];e.type;let n=e.children[0];if(n&&n.type===`text`){let r=t.children,i=-1,a;for(;++i<r.length;){let e=r[i];if(e.type===`paragraph`){a=e;break}}a===e&&(n.value=n.value.slice(1),n.value.length===0?e.children.shift():e.position&&n.position&&typeof n.position.start.offset==`number`&&(n.position.start.column++,n.position.start.offset++,e.position.start=Object.assign({},n.position.start)))}}this.exit(e)}function af(e,t,n,r){let i=e.children[0],a=typeof e.checked==`boolean`&&i&&i.type===`paragraph`,o=`[`+(e.checked?`x`:` `)+`] `,s=n.createTracker(r);a&&s.move(o);let c=Wd.listItem(e,t,n,{...r,...s.current()});return a&&(c=c.replace(/^(?:[*+-]|\d+\.)([\r\n]| {1,3})/,l)),c;function l(e){return e+o}}function of(){return[mu(),Ru(),Uu(),Gd(),ef()]}function sf(e){return{extensions:[hu(),zu(e),Wu(),$d(e),tf()]}}var cf={tokenize:Sf,partial:!0},lf={tokenize:Cf,partial:!0},uf={tokenize:wf,partial:!0},df={tokenize:Tf,partial:!0},ff={tokenize:Ef,partial:!0},pf={name:`wwwAutolink`,tokenize:bf,previous:Df},mf={name:`protocolAutolink`,tokenize:xf,previous:Of},hf={name:`emailAutolink`,tokenize:yf,previous:kf},gf={};function _f(){return{text:gf}}for(var vf=48;vf<123;)gf[vf]=hf,vf++,vf===58?vf=65:vf===91&&(vf=97);gf[43]=hf,gf[45]=hf,gf[46]=hf,gf[95]=hf,gf[72]=[hf,mf],gf[104]=[hf,mf],gf[87]=[hf,pf],gf[119]=[hf,pf];function yf(e,t,n){let r=this,i,a;return o;function o(t){return!Af(t)||!kf.call(r,r.previous)||jf(r.events)?n(t):(e.enter(`literalAutolink`),e.enter(`literalAutolinkEmail`),s(t))}function s(t){return Af(t)?(e.consume(t),s):t===64?(e.consume(t),c):n(t)}function c(t){return t===46?e.check(ff,u,l)(t):t===45||t===95||Ca(t)?(a=!0,e.consume(t),c):u(t)}function l(t){return e.consume(t),i=!0,c}function u(o){return a&&i&&Sa(r.previous)?(e.exit(`literalAutolinkEmail`),e.exit(`literalAutolink`),t(o)):n(o)}}function bf(e,t,n){let r=this;return i;function i(t){return t!==87&&t!==119||!Df.call(r,r.previous)||jf(r.events)?n(t):(e.enter(`literalAutolink`),e.enter(`literalAutolinkWww`),e.check(cf,e.attempt(lf,e.attempt(uf,a),n),n)(t))}function a(n){return e.exit(`literalAutolinkWww`),e.exit(`literalAutolink`),t(n)}}function xf(e,t,n){let r=this,i=``,a=!1;return o;function o(t){return(t===72||t===104)&&Of.call(r,r.previous)&&!jf(r.events)?(e.enter(`literalAutolink`),e.enter(`literalAutolinkHttp`),i+=String.fromCodePoint(t),e.consume(t),s):n(t)}function s(t){if(Sa(t)&&i.length<5)return i+=String.fromCodePoint(t),e.consume(t),s;if(t===58){let n=i.toLowerCase();if(n===`http`||n===`https`)return e.consume(t),c}return n(t)}function c(t){return t===47?(e.consume(t),a?l:(a=!0,c)):n(t)}function l(t){return t===null||Ta(t)||z(t)||Aa(t)||ka(t)?n(t):e.attempt(lf,e.attempt(uf,u),n)(t)}function u(n){return e.exit(`literalAutolinkHttp`),e.exit(`literalAutolink`),t(n)}}function Sf(e,t,n){let r=0;return i;function i(t){return(t===87||t===119)&&r<3?(r++,e.consume(t),i):t===46&&r===3?(e.consume(t),a):n(t)}function a(e){return e===null?n(e):t(e)}}function Cf(e,t,n){let r,i,a;return o;function o(t){return t===46||t===95?e.check(df,c,s)(t):t===null||z(t)||Aa(t)||t!==45&&ka(t)?c(t):(a=!0,e.consume(t),o)}function s(t){return t===95?r=!0:(i=r,r=void 0),e.consume(t),o}function c(e){return i||r||!a?n(e):t(e)}}function wf(e,t){let n=0,r=0;return i;function i(o){return o===40?(n++,e.consume(o),i):o===41&&r<n?a(o):o===33||o===34||o===38||o===39||o===41||o===42||o===44||o===46||o===58||o===59||o===60||o===63||o===93||o===95||o===126?e.check(df,t,a)(o):o===null||z(o)||Aa(o)?t(o):(e.consume(o),i)}function a(t){return t===41&&r++,e.consume(t),i}}function Tf(e,t,n){return r;function r(o){return o===33||o===34||o===39||o===41||o===42||o===44||o===46||o===58||o===59||o===63||o===95||o===126?(e.consume(o),r):o===38?(e.consume(o),a):o===93?(e.consume(o),i):o===60||o===null||z(o)||Aa(o)?t(o):n(o)}function i(e){return e===null||e===40||e===91||z(e)||Aa(e)?t(e):r(e)}function a(e){return Sa(e)?o(e):n(e)}function o(t){return t===59?(e.consume(t),r):Sa(t)?(e.consume(t),o):n(t)}}function Ef(e,t,n){return r;function r(t){return e.consume(t),i}function i(e){return Ca(e)?n(e):t(e)}}function Df(e){return e===null||e===40||e===42||e===95||e===91||e===93||e===126||z(e)}function Of(e){return!Sa(e)}function kf(e){return!(e===47||Af(e))}function Af(e){return e===43||e===45||e===46||e===95||Ca(e)}function jf(e){let t=e.length,n=!1;for(;t--;){let r=e[t][1];if((r.type===`labelLink`||r.type===`labelImage`)&&!r._balanced){n=!0;break}if(r._gfmAutolinkLiteralWalkedInto){n=!1;break}}return e.length>0&&!n&&(e[e.length-1][1]._gfmAutolinkLiteralWalkedInto=!0),n}var Mf={tokenize:Bf,partial:!0};function Nf(){return{document:{91:{name:`gfmFootnoteDefinition`,tokenize:Lf,continuation:{tokenize:Rf},exit:zf}},text:{91:{name:`gfmFootnoteCall`,tokenize:If},93:{name:`gfmPotentialFootnoteCall`,add:`after`,tokenize:Pf,resolveTo:Ff}}}}function Pf(e,t,n){let r=this,i=r.events.length,a=r.parser.gfmFootnotes||(r.parser.gfmFootnotes=[]),o;for(;i--;){let e=r.events[i][1];if(e.type===`labelImage`){o=e;break}if(e.type===`gfmFootnoteCall`||e.type===`labelLink`||e.type===`label`||e.type===`image`||e.type===`link`)break}return s;function s(i){if(!o||!o._balanced)return n(i);let s=xa(r.sliceSerialize({start:o.end,end:r.now()}));return s.codePointAt(0)!==94||!a.includes(s.slice(1))?n(i):(e.enter(`gfmFootnoteCallLabelMarker`),e.consume(i),e.exit(`gfmFootnoteCallLabelMarker`),t(i))}}function Ff(e,t){let n=e.length;for(;n--;)if(e[n][1].type===`labelImage`&&e[n][0]===`enter`){e[n][1];break}e[n+1][1].type=`data`,e[n+3][1].type=`gfmFootnoteCallLabelMarker`;let r={type:`gfmFootnoteCall`,start:Object.assign({},e[n+3][1].start),end:Object.assign({},e[e.length-1][1].end)},i={type:`gfmFootnoteCallMarker`,start:Object.assign({},e[n+3][1].end),end:Object.assign({},e[n+3][1].end)};i.end.column++,i.end.offset++,i.end._bufferIndex++;let a={type:`gfmFootnoteCallString`,start:Object.assign({},i.end),end:Object.assign({},e[e.length-1][1].start)},o={type:`chunkString`,contentType:`string`,start:Object.assign({},a.start),end:Object.assign({},a.end)},s=[e[n+1],e[n+2],[`enter`,r,t],e[n+3],e[n+4],[`enter`,i,t],[`exit`,i,t],[`enter`,a,t],[`enter`,o,t],[`exit`,o,t],[`exit`,a,t],e[e.length-2],e[e.length-1],[`exit`,r,t]];return e.splice(n,e.length-n+1,...s),e}function If(e,t,n){let r=this,i=r.parser.gfmFootnotes||(r.parser.gfmFootnotes=[]),a=0,o;return s;function s(t){return e.enter(`gfmFootnoteCall`),e.enter(`gfmFootnoteCallLabelMarker`),e.consume(t),e.exit(`gfmFootnoteCallLabelMarker`),c}function c(t){return t===94?(e.enter(`gfmFootnoteCallMarker`),e.consume(t),e.exit(`gfmFootnoteCallMarker`),e.enter(`gfmFootnoteCallString`),e.enter(`chunkString`).contentType=`string`,l):n(t)}function l(s){if(a>999||s===93&&!o||s===null||s===91||z(s))return n(s);if(s===93){e.exit(`chunkString`);let a=e.exit(`gfmFootnoteCallString`);return i.includes(xa(r.sliceSerialize(a)))?(e.enter(`gfmFootnoteCallLabelMarker`),e.consume(s),e.exit(`gfmFootnoteCallLabelMarker`),e.exit(`gfmFootnoteCall`),t):n(s)}return z(s)||(o=!0),a++,e.consume(s),s===92?u:l}function u(t){return t===91||t===92||t===93?(e.consume(t),a++,l):l(t)}}function Lf(e,t,n){let r=this,i=r.parser.gfmFootnotes||(r.parser.gfmFootnotes=[]),a,o=0,s;return c;function c(t){return e.enter(`gfmFootnoteDefinition`)._container=!0,e.enter(`gfmFootnoteDefinitionLabel`),e.enter(`gfmFootnoteDefinitionLabelMarker`),e.consume(t),e.exit(`gfmFootnoteDefinitionLabelMarker`),l}function l(t){return t===94?(e.enter(`gfmFootnoteDefinitionMarker`),e.consume(t),e.exit(`gfmFootnoteDefinitionMarker`),e.enter(`gfmFootnoteDefinitionLabelString`),e.enter(`chunkString`).contentType=`string`,u):n(t)}function u(t){if(o>999||t===93&&!s||t===null||t===91||z(t))return n(t);if(t===93){e.exit(`chunkString`);let n=e.exit(`gfmFootnoteDefinitionLabelString`);return a=xa(r.sliceSerialize(n)),e.enter(`gfmFootnoteDefinitionLabelMarker`),e.consume(t),e.exit(`gfmFootnoteDefinitionLabelMarker`),e.exit(`gfmFootnoteDefinitionLabel`),f}return z(t)||(s=!0),o++,e.consume(t),t===92?d:u}function d(t){return t===91||t===92||t===93?(e.consume(t),o++,u):u(t)}function f(t){return t===58?(e.enter(`definitionMarker`),e.consume(t),e.exit(`definitionMarker`),i.includes(a)||i.push(a),V(e,p,`gfmFootnoteDefinitionWhitespace`)):n(t)}function p(e){return t(e)}}function Rf(e,t,n){return e.check(qa,t,e.attempt(Mf,t,n))}function zf(e){e.exit(`gfmFootnoteDefinition`)}function Bf(e,t,n){let r=this;return V(e,i,`gfmFootnoteDefinitionIndent`,5);function i(e){let i=r.events[r.events.length-1];return i&&i[1].type===`gfmFootnoteDefinitionIndent`&&i[2].sliceSerialize(i[1],!0).length===4?t(e):n(e)}}function Vf(e){let t=(e||{}).singleTilde,n={name:`strikethrough`,tokenize:i,resolveAll:r};return t??=!0,{text:{126:n},insideSpan:{null:[n]},attentionMarkers:{null:[126]}};function r(e,t){let n=-1;for(;++n<e.length;)if(e[n][0]===`enter`&&e[n][1].type===`strikethroughSequenceTemporary`&&e[n][1]._close){let r=n;for(;r--;)if(e[r][0]===`exit`&&e[r][1].type===`strikethroughSequenceTemporary`&&e[r][1]._open&&e[n][1].end.offset-e[n][1].start.offset===e[r][1].end.offset-e[r][1].start.offset){e[n][1].type=`strikethroughSequence`,e[r][1].type=`strikethroughSequence`;let i={type:`strikethrough`,start:Object.assign({},e[r][1].start),end:Object.assign({},e[n][1].end)},a={type:`strikethroughText`,start:Object.assign({},e[r][1].end),end:Object.assign({},e[n][1].start)},o=[[`enter`,i,t],[`enter`,e[r][1],t],[`exit`,e[r][1],t],[`enter`,a,t]],s=t.parser.constructs.insideSpan.null;s&&ma(o,o.length,0,Ba(s,e.slice(r+1,n),t)),ma(o,o.length,0,[[`exit`,a,t],[`enter`,e[n][1],t],[`exit`,e[n][1],t],[`exit`,i,t]]),ma(e,r-1,n-r+3,o),n=r+o.length-2;break}}for(n=-1;++n<e.length;)e[n][1].type===`strikethroughSequenceTemporary`&&(e[n][1].type=`data`);return e}function i(e,n,r){let i=this.previous,a=this.events,o=0;return s;function s(t){return i===126&&a[a.length-1][1].type!==`characterEscape`?r(t):(e.enter(`strikethroughSequenceTemporary`),c(t))}function c(a){let s=za(i);if(a===126)return o>1?r(a):(e.consume(a),o++,c);if(o<2&&!t)return r(a);let l=e.exit(`strikethroughSequenceTemporary`),u=za(a);return l._open=!u||u===2&&!!s,l._close=!s||s===2&&!!u,n(a)}}}var Hf=class{constructor(){this.map=[]}add(e,t,n){Uf(this,e,t,n)}consume(e){if(this.map.sort(function(e,t){return e[0]-t[0]}),this.map.length===0)return;let t=this.map.length,n=[];for(;t>0;)--t,n.push(e.slice(this.map[t][0]+this.map[t][1]),this.map[t][2]),e.length=this.map[t][0];n.push(e.slice()),e.length=0;let r=n.pop();for(;r;){for(let t of r)e.push(t);r=n.pop()}this.map.length=0}};function Uf(e,t,n,r){let i=0;if(n!==0||r.length!==0){for(;i<e.map.length;){if(e.map[i][0]===t){e.map[i][1]+=n,e.map[i][2].push(...r);return}i+=1}e.map.push([t,n,r])}}function Wf(e,t){let n=!1,r=[];for(;t<e.length;){let i=e[t];if(n){if(i[0]===`enter`)i[1].type===`tableContent`&&r.push(e[t+1][1].type===`tableDelimiterMarker`?`left`:`none`);else if(i[1].type===`tableContent`){if(e[t-1][1].type===`tableDelimiterMarker`){let e=r.length-1;r[e]=r[e]===`left`?`center`:`right`}}else if(i[1].type===`tableDelimiterRow`)break}else i[0]===`enter`&&i[1].type===`tableDelimiterRow`&&(n=!0);t+=1}return r}function Gf(){return{flow:{null:{name:`table`,tokenize:Kf,resolveAll:qf}}}}function Kf(e,t,n){let r=this,i=0,a=0,o;return s;function s(e){let t=r.events.length-1;for(;t>-1;){let e=r.events[t][1].type;if(e===`lineEnding`||e===`linePrefix`)t--;else break}let i=t>-1?r.events[t][1].type:null,a=i===`tableHead`||i===`tableRow`?S:c;return a===S&&r.parser.lazy[r.now().line]?n(e):a(e)}function c(t){return e.enter(`tableHead`),e.enter(`tableRow`),l(t)}function l(e){return e===124?u(e):(o=!0,a+=1,u(e))}function u(t){return t===null?n(t):R(t)?a>1?(a=0,r.interrupt=!0,e.exit(`tableRow`),e.enter(`lineEnding`),e.consume(t),e.exit(`lineEnding`),p):n(t):B(t)?V(e,u,`whitespace`)(t):(a+=1,o&&(o=!1,i+=1),t===124?(e.enter(`tableCellDivider`),e.consume(t),e.exit(`tableCellDivider`),o=!0,u):(e.enter(`data`),d(t)))}function d(t){return t===null||t===124||z(t)?(e.exit(`data`),u(t)):(e.consume(t),t===92?f:d)}function f(t){return t===92||t===124?(e.consume(t),d):d(t)}function p(t){return r.interrupt=!1,r.parser.lazy[r.now().line]?n(t):(e.enter(`tableDelimiterRow`),o=!1,B(t)?V(e,m,`linePrefix`,r.parser.constructs.disable.null.includes(`codeIndented`)?void 0:4)(t):m(t))}function m(t){return t===45||t===58?g(t):t===124?(o=!0,e.enter(`tableCellDivider`),e.consume(t),e.exit(`tableCellDivider`),h):x(t)}function h(t){return B(t)?V(e,g,`whitespace`)(t):g(t)}function g(t){return t===58?(a+=1,o=!0,e.enter(`tableDelimiterMarker`),e.consume(t),e.exit(`tableDelimiterMarker`),_):t===45?(a+=1,_(t)):t===null||R(t)?b(t):x(t)}function _(t){return t===45?(e.enter(`tableDelimiterFiller`),v(t)):x(t)}function v(t){return t===45?(e.consume(t),v):t===58?(o=!0,e.exit(`tableDelimiterFiller`),e.enter(`tableDelimiterMarker`),e.consume(t),e.exit(`tableDelimiterMarker`),y):(e.exit(`tableDelimiterFiller`),y(t))}function y(t){return B(t)?V(e,b,`whitespace`)(t):b(t)}function b(n){return n===124?m(n):n===null||R(n)?!o||i!==a?x(n):(e.exit(`tableDelimiterRow`),e.exit(`tableHead`),t(n)):x(n)}function x(e){return n(e)}function S(t){return e.enter(`tableRow`),C(t)}function C(n){return n===124?(e.enter(`tableCellDivider`),e.consume(n),e.exit(`tableCellDivider`),C):n===null||R(n)?(e.exit(`tableRow`),t(n)):B(n)?V(e,C,`whitespace`)(n):(e.enter(`data`),w(n))}function w(t){return t===null||t===124||z(t)?(e.exit(`data`),C(t)):(e.consume(t),t===92?T:w)}function T(t){return t===92||t===124?(e.consume(t),w):w(t)}}function qf(e,t){let n=-1,r=!0,i=0,a=[0,0,0,0],o=[0,0,0,0],s=!1,c=0,l,u,d,f=new Hf;for(;++n<e.length;){let p=e[n],m=p[1];p[0]===`enter`?m.type===`tableHead`?(s=!1,c!==0&&(Yf(f,t,c,l,u),u=void 0,c=0),l={type:`table`,start:Object.assign({},m.start),end:Object.assign({},m.end)},f.add(n,0,[[`enter`,l,t]])):m.type===`tableRow`||m.type===`tableDelimiterRow`?(r=!0,d=void 0,a=[0,0,0,0],o=[0,n+1,0,0],s&&(s=!1,u={type:`tableBody`,start:Object.assign({},m.start),end:Object.assign({},m.end)},f.add(n,0,[[`enter`,u,t]])),i=m.type===`tableDelimiterRow`?2:u?3:1):i&&(m.type===`data`||m.type===`tableDelimiterMarker`||m.type===`tableDelimiterFiller`)?(r=!1,o[2]===0&&(a[1]!==0&&(o[0]=o[1],d=Jf(f,t,a,i,void 0,d),a=[0,0,0,0]),o[2]=n)):m.type===`tableCellDivider`&&(r?r=!1:(a[1]!==0&&(o[0]=o[1],d=Jf(f,t,a,i,void 0,d)),a=o,o=[a[1],n,0,0])):m.type===`tableHead`?(s=!0,c=n):m.type===`tableRow`||m.type===`tableDelimiterRow`?(c=n,a[1]===0?o[1]!==0&&(d=Jf(f,t,o,i,n,d)):(o[0]=o[1],d=Jf(f,t,a,i,n,d)),i=0):i&&(m.type===`data`||m.type===`tableDelimiterMarker`||m.type===`tableDelimiterFiller`)&&(o[3]=n)}for(c!==0&&Yf(f,t,c,l,u),f.consume(t.events),n=-1;++n<t.events.length;){let e=t.events[n];e[0]===`enter`&&e[1].type===`table`&&(e[1]._align=Wf(t.events,n))}return e}function Jf(e,t,n,r,i,a){let o=r===1?`tableHeader`:r===2?`tableDelimiter`:`tableData`;n[0]!==0&&(a.end=Object.assign({},Xf(t.events,n[0])),e.add(n[0],0,[[`exit`,a,t]]));let s=Xf(t.events,n[1]);if(a={type:o,start:Object.assign({},s),end:Object.assign({},s)},e.add(n[1],0,[[`enter`,a,t]]),n[2]!==0){let i=Xf(t.events,n[2]),a=Xf(t.events,n[3]),o={type:`tableContent`,start:Object.assign({},i),end:Object.assign({},a)};if(e.add(n[2],0,[[`enter`,o,t]]),r!==2){let r=t.events[n[2]],i=t.events[n[3]];if(r[1].end=Object.assign({},i[1].end),r[1].type=`chunkText`,r[1].contentType=`text`,n[3]>n[2]+1){let t=n[2]+1,r=n[3]-n[2]-1;e.add(t,r,[])}}e.add(n[3]+1,0,[[`exit`,o,t]])}return i!==void 0&&(a.end=Object.assign({},Xf(t.events,i)),e.add(i,0,[[`exit`,a,t]]),a=void 0),a}function Yf(e,t,n,r,i){let a=[],o=Xf(t.events,n);i&&(i.end=Object.assign({},o),a.push([`exit`,i,t])),r.end=Object.assign({},o),a.push([`exit`,r,t]),e.add(n+1,0,a)}function Xf(e,t){let n=e[t],r=n[0]===`enter`?`start`:`end`;return n[1][r]}var Zf={name:`tasklistCheck`,tokenize:$f};function Qf(){return{text:{91:Zf}}}function $f(e,t,n){let r=this;return i;function i(t){return r.previous!==null||!r._gfmTasklistFirstContentOfListItem?n(t):(e.enter(`taskListCheck`),e.enter(`taskListCheckMarker`),e.consume(t),e.exit(`taskListCheckMarker`),a)}function a(t){return z(t)?(e.enter(`taskListCheckValueUnchecked`),e.consume(t),e.exit(`taskListCheckValueUnchecked`),o):t===88||t===120?(e.enter(`taskListCheckValueChecked`),e.consume(t),e.exit(`taskListCheckValueChecked`),o):n(t)}function o(t){return t===93?(e.enter(`taskListCheckMarker`),e.consume(t),e.exit(`taskListCheckMarker`),e.exit(`taskListCheck`),s):n(t)}function s(r){return R(r)?t(r):B(r)?e.check({tokenize:ep},t,n)(r):n(r)}}function ep(e,t,n){return V(e,r,`whitespace`);function r(e){return e===null?n(e):t(e)}}function tp(e){return _a([_f(),Nf(),Vf(e),Gf(),Qf()])}var np={};function rp(e){let t=this,n=e||np,r=t.data(),i=r.micromarkExtensions||=[],a=r.fromMarkdownExtensions||=[],o=r.toMarkdownExtensions||=[];i.push(tp(n)),a.push(of()),o.push(sf(n))}function ip(e){return e.replace(/<p align="center">\s*<img src="(?:assets\/)?([^"]+)"[^>]*>\s*<\/p>\n*/g,(e,t)=>`\n\n![Gofreight](${t.replace(/^assets\//,``)})\n\n`).replace(/<h1 align="center">([\s\S]*?)<\/h1>\n*/g,`# $1
 
-`).replace(/<p align="center">\s*([\s\S]*?)\s*<\/p>\n*/g,(e,t)=>`${t.trim()}\n\n`).replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g,`![Gofreight]($1)`).replace(/\]\(\.\.\/README\.md\)/g,`](https://github.com/lsgser/gofreight)`).replace(/\]\(([^)]+\.md)\)/g,(e,t)=>`](/docs/${t.replace(/^.*\//,``).replace(`.md`,``)})`)}function ap({content:e}){let t=ip(e),n=(0,S.useRef)(!1);return(0,M.jsx)(tu,{remarkPlugins:[rp],components:{h1:({children:e})=>(0,M.jsx)(`h1`,{className:`doc-h1`,children:e}),h2:({children:e})=>(0,M.jsx)(`h2`,{className:`doc-h2`,children:e}),h3:({children:e})=>(0,M.jsx)(`h3`,{className:`doc-h3`,children:e}),p:({children:e})=>(0,M.jsx)(`p`,{className:`doc-p`,children:e}),img:({src:e,alt:t})=>{let r=!n.current;n.current=!0;let i=xr(e),a=typeof i==`string`&&i.includes(`logo`);return(0,M.jsx)(`img`,{src:i,alt:t??`Gofreight`,className:r?a?`doc-brand-logo`:`doc-brand-icon`:`doc-inline-img`,loading:`lazy`})},ul:({children:e})=>(0,M.jsx)(`ul`,{className:`doc-ul`,children:e}),ol:({children:e})=>(0,M.jsx)(`ol`,{className:`doc-ol`,children:e}),li:({children:e})=>(0,M.jsx)(`li`,{className:`doc-li`,children:e}),a:({href:e,children:t})=>(0,M.jsx)(`a`,{href:e,className:`doc-link`,target:e?.startsWith(`http`)?`_blank`:void 0,rel:`noreferrer`,children:t}),code:({className:e,children:t})=>e?.includes(`language-`)?(0,M.jsx)(`pre`,{className:`doc-pre`,children:(0,M.jsx)(`code`,{className:e,children:t})}):(0,M.jsx)(`code`,{className:`doc-code`,children:t}),pre:({children:e})=>(0,M.jsx)(M.Fragment,{children:e}),table:({children:e})=>(0,M.jsx)(`div`,{className:`doc-table-wrap`,children:(0,M.jsx)(`table`,{className:`doc-table`,children:e})}),blockquote:({children:e})=>(0,M.jsx)(`blockquote`,{className:`doc-quote`,children:e}),hr:()=>(0,M.jsx)(`hr`,{className:`doc-hr`})},children:t})}function op(){let{slug:e=``}=wt(),t=nr(e);return t?(0,M.jsxs)(`article`,{className:`doc-article`,children:[(0,M.jsx)(ap,{content:t}),(0,M.jsx)(`footer`,{className:`doc-article-footer`,children:(0,M.jsxs)(`p`,{children:[`Edit this page on`,` `,(0,M.jsx)(`a`,{href:`https://github.com/lsgser/gofreight/blob/main/docs/${e}.md`,target:`_blank`,rel:`noreferrer`,children:`GitHub`})]})})]}):(0,M.jsxs)(`div`,{className:`doc-not-found`,children:[(0,M.jsx)(`h1`,{children:`Page not found`}),(0,M.jsxs)(`p`,{children:[`The documentation page `,(0,M.jsx)(`code`,{children:e}),` does not exist.`]}),(0,M.jsx)(In,{to:`/docs`,children:`Back to documentation`})]})}function sp(){return(0,M.jsxs)(`div`,{className:`docs-index`,children:[(0,M.jsx)(`h1`,{children:`Documentation`}),(0,M.jsx)(`p`,{className:`docs-index-lead`,children:`Learn how to build applications with Gofreight — step-by-step tutorials, guides, references, and examples for every layer of the framework.`}),Xn.map(e=>(0,M.jsxs)(`section`,{className:`docs-index-section`,children:[(0,M.jsx)(`h2`,{children:e.title}),(0,M.jsx)(`div`,{className:`docs-index-grid`,children:e.items.map(e=>(0,M.jsxs)(In,{to:`/docs/${e.slug}`,className:`docs-index-card`,children:[(0,M.jsx)(`h3`,{children:e.title}),e.description&&(0,M.jsx)(`p`,{children:e.description})]},e.slug))})]},e.title))]})}var cp=[{title:`Route Groups & URLs`,description:`Named routes, redirects, constraints, model binding, signed URLs, and domain routing.`,icon:`⇢`},{title:`ORM & Migrations`,description:`Type-safe models, chainable queries, associations, and a migration runner built for Go.`,icon:`◫`},{title:`Gofreight Templates`,description:`Native .gft views with layouts, slots, form components, CSRF, and Vite integration.`,icon:`◇`},{title:`CLI & Generators`,description:`800+ line command reference — scaffold, migrate, seed, queue, schedule, and more.`,icon:`⌘`},{title:`Auth & Authorization`,description:`Session login, JWT, API tokens, policies, gates, and role middleware.`,icon:`⛨`},{title:`Jobs & Scheduling`,description:`Background queues with Redis workers, named jobs, and cron-style task scheduler.`,icon:`⏱`},{title:`GraphQL`,description:`Modular GraphQL with DataLoader, GraphiQL playground, depth and rate limits.`,icon:`◈`},{title:`Real-time WebSockets`,description:`Socket.io-style rooms, Redis broadcast, and a TypeScript client.`,icon:`⚡`},{title:`Single Binary`,description:`Compile your entire web application — server, templates, assets — into one Go binary.`,icon:`▣`}],lp=[`Go-first — stdlib HTTP, explicit types, go mod`,`Batteries included — routing, ORM, views, CLI, queues, auth`,`Convention over configuration — predictable folders and generators`,`Vendor-neutral — bring your own payment, CRM, and analytics drivers`],up=`# Install the CLI
+`).replace(/<p align="center">\s*([\s\S]*?)\s*<\/p>\n*/g,(e,t)=>`${t.trim()}\n\n`).replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g,`![Gofreight]($1)`).replace(/\]\(\.\.\/README\.md\)/g,`](https://github.com/lsgser/gofreight)`).replace(/\]\(([^)]+\.md)\)/g,(e,t)=>`](/docs/${t.replace(/^.*\//,``).replace(`.md`,``)})`)}function ap({content:e}){let t=ip(e),n=(0,S.useRef)(!1);return(0,M.jsx)(tu,{remarkPlugins:[rp],components:{h1:({children:e})=>(0,M.jsx)(`h1`,{className:`doc-h1`,children:e}),h2:({children:e})=>(0,M.jsx)(`h2`,{className:`doc-h2`,children:e}),h3:({children:e})=>(0,M.jsx)(`h3`,{className:`doc-h3`,children:e}),p:({children:e})=>(0,M.jsx)(`p`,{className:`doc-p`,children:e}),img:({src:e,alt:t})=>{let r=!n.current;n.current=!0;let i=xr(e),a=typeof i==`string`&&i.includes(`logo`);return(0,M.jsx)(`img`,{src:i,alt:t??`Gofreight`,className:r?a?`doc-brand-logo`:`doc-brand-icon`:`doc-inline-img`,loading:`lazy`})},ul:({children:e})=>(0,M.jsx)(`ul`,{className:`doc-ul`,children:e}),ol:({children:e})=>(0,M.jsx)(`ol`,{className:`doc-ol`,children:e}),li:({children:e})=>(0,M.jsx)(`li`,{className:`doc-li`,children:e}),a:({href:e,children:t})=>(0,M.jsx)(`a`,{href:e,className:`doc-link`,target:e?.startsWith(`http`)?`_blank`:void 0,rel:`noreferrer`,children:t}),code:({className:e,children:t})=>e?.includes(`language-`)?(0,M.jsx)(`pre`,{className:`doc-pre`,children:(0,M.jsx)(`code`,{className:e,children:t})}):(0,M.jsx)(`code`,{className:`doc-code`,children:t}),pre:({children:e})=>(0,M.jsx)(M.Fragment,{children:e}),table:({children:e})=>(0,M.jsx)(`div`,{className:`doc-table-wrap`,children:(0,M.jsx)(`table`,{className:`doc-table`,children:e})}),blockquote:({children:e})=>(0,M.jsx)(`blockquote`,{className:`doc-quote`,children:e}),hr:()=>(0,M.jsx)(`hr`,{className:`doc-hr`})},children:t})}function op(){let{slug:e=``}=wt(),t=nr(e);return t?(0,M.jsxs)(`article`,{className:`doc-article`,children:[(0,M.jsx)(ap,{content:t}),(0,M.jsx)(`footer`,{className:`doc-article-footer`,children:(0,M.jsxs)(`p`,{children:[`Edit this page on`,` `,(0,M.jsx)(`a`,{href:`https://github.com/lsgser/gofreight/blob/main/docs/${e}.md`,target:`_blank`,rel:`noreferrer`,children:`GitHub`})]})})]}):(0,M.jsxs)(`div`,{className:`doc-not-found`,children:[(0,M.jsx)(`h1`,{children:`Page not found`}),(0,M.jsxs)(`p`,{children:[`The documentation page `,(0,M.jsx)(`code`,{children:e}),` does not exist.`]}),(0,M.jsx)(In,{to:`/docs`,children:`Back to documentation`})]})}function sp(){return(0,M.jsxs)(`div`,{className:`docs-index`,children:[(0,M.jsx)(`h1`,{children:`Documentation`}),(0,M.jsx)(`p`,{className:`docs-index-lead`,children:`Learn how to build applications with Gofreight — step-by-step tutorials, guides, references, and examples for every layer of the framework.`}),Xn.map(e=>(0,M.jsxs)(`section`,{className:`docs-index-section`,children:[(0,M.jsx)(`h2`,{children:e.title}),(0,M.jsx)(`div`,{className:`docs-index-grid`,children:e.items.map(e=>(0,M.jsxs)(In,{to:`/docs/${e.slug}`,className:`docs-index-card`,children:[(0,M.jsx)(`h3`,{children:e.title}),e.description&&(0,M.jsx)(`p`,{children:e.description})]},e.slug))})]},e.title))]})}var cp=[{title:`Route Groups & URLs`,description:`Named routes, redirects, constraints, model binding, signed URLs, and domain routing.`,icon:`⇢`},{title:`ORM & Migrations`,description:`Type-safe models, chainable queries, associations, and a migration runner built for Go.`,icon:`◫`},{title:`Gofreight Templates`,description:`Native .gft views with layouts, slots, form components, CSRF, and Vite integration.`,icon:`◇`},{title:`CLI & Generators`,description:`Scaffold, migrate, GraphQL modules, auth, queue, schedule — 800+ line command reference.`,icon:`⌘`},{title:`Auth & Authorization`,description:`Session login, JWT, API tokens, policies, gates, and role middleware.`,icon:`⛨`},{title:`Jobs & Scheduling`,description:`Background queues with Redis workers, named jobs, and cron-style task scheduler.`,icon:`⏱`},{title:`GraphQL`,description:`Modular GraphQL with DataLoader, playground, and make:graphql-module generators.`,icon:`◈`},{title:`Real-time WebSockets`,description:`Socket.io-style rooms, Redis broadcast, and a TypeScript client.`,icon:`⚡`},{title:`Single Binary`,description:`Compile your entire web application — server, templates, assets — into one Go binary.`,icon:`▣`}],lp=[`Go-first — stdlib HTTP, explicit types, go mod`,`Batteries included — routing, ORM, views, CLI, queues, auth`,`Convention over configuration — predictable folders and generators`,`Vendor-neutral — bring your own payment, CRM, and analytics drivers`],up=`# Install the CLI
 go install github.com/lsgser/gofreight/cmd/gofreight@latest
 
 # Create an app
