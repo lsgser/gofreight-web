@@ -181,8 +181,8 @@ Run `gofreight serve` inside `demoapp/` and connect with the TypeScript client.
 
 ## Production notes
 
-- The built-in hub is **in-memory** — suitable for single-process deployments and development.
-- For multi-instance broadcast, add a Redis pub/sub adapter or use a dedicated service (Pusher, Ably, etc.).
+- The built-in hub is **in-memory** by default — suitable for single-process deployments and development.
+- For **multi-instance broadcast**, set `REDIS_URL` in `.env`. New apps call `app.UseRedisBroadcast(config.ResolveRedisURL())` when Redis is configured. Events publish to Redis pub/sub and fan out to all connected clients on every node.
 - Set `CheckOrigin` appropriately before production (currently permissive for local dev).
 - WebSocket routes skip CSRF for the upgrade handshake; protect sensitive rooms with session/JWT checks in `OnConnect`.
 

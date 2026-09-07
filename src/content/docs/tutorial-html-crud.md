@@ -80,45 +80,40 @@ controller.Render(w, r, "posts/index", controller.ViewData(r, map[string]any{
 
 ## Step 3 — Form helpers
 
-Gofreight provides `#form`, `#field`, and `#error` for consistent forms with CSRF protection:
+Gofreight provides `#form`, `#field`, `#token`, and `#error` for consistent forms with CSRF protection:
 
 ```html
-{{ define "posts/form" }}
-<form method="POST" action="{{ .FormAction }}">
-  {{ csrfField }}
+#layout "layouts/application"
 
-  {{ field "title" .Post.Title "text" }}
-  {{ error "title" }}
+#form action="/posts" method="POST"
+  #field "title" label="Title" type="text" value=".Post.Title"
+  #error "title"
 
-  {{ field "body" .Post.Body "textarea" }}
-  {{ error "body" }}
+  #field "body" label="Body" type="textarea" value=".Post.Body"
+  #error "body"
 
-  <label>
-    <input type="checkbox" name="published" {{ if .Post.Published }}checked{{ end }}>
-    Published
-  </label>
-
+  #field "published" label="Published" type="checkbox"
+  #token
   <button type="submit">Save</button>
-</form>
-{{ end }}
+#endform
 ```
 
-The CSRF field uses the name `authenticity_token`.
+`#token` emits the CSRF hidden field (`authenticity_token`).
 
 ## Step 4 — Vine validation
 
 Define a schema and validate in your controller:
 
 ```go
-var postSchema = vine.Object().
-    Field("title", vine.String().Required().Min(3).Max(255)).
-    Field("body", vine.String().Required())
+var postSchema = vine.Object(map[string]vine.Rule{
+    "title": vine.String().Required().MinLength(3).MaxLength(255),
+    "body":  vine.String().Required(),
+})
 
-func (c *PostsController) Store(w http.ResponseWriter, r *http.Request) {
-    data, err := controller.ValidateUsing(r, postSchema)
+func (c PostsController) Store(base controller.Base) error {
+    data, err := base.ValidateUsing(postSchema)
     if err != nil {
-        controller.RedirectBackWithErrors(w, r, err)
-        return
+        return nil // ValidateUsing responds with redirect or 422
     }
 
     // create post from data...

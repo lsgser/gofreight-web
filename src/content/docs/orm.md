@@ -524,8 +524,8 @@ app := gftest.NewApp(t,
             updated_at TEXT
         );
     `),
-    gftest.WithRoutes(routes.Register),
 )
+app.Draw(routes.Register)
 ```
 
 Or point at your migration directory:

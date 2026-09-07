@@ -1,7 +1,7 @@
 export const features = [
   {
-    title: 'Route Groups',
-    description: 'Prefix, middleware, and nested groups for clean API versioning — without facades.',
+    title: 'Route Groups & URLs',
+    description: 'Named routes, redirects, constraints, model binding, signed URLs, and domain routing.',
     icon: '⇢',
   },
   {
@@ -11,18 +11,23 @@ export const features = [
   },
   {
     title: 'Gofreight Templates',
-    description: 'Native .gft views with layouts, slots, form components, and CSRF helpers.',
+    description: 'Native .gft views with layouts, slots, form components, CSRF, and Vite integration.',
     icon: '◇',
   },
   {
     title: 'CLI & Generators',
-    description: 'Scaffold resources, run migrations, seed databases, and ship features from the terminal.',
+    description: '800+ line command reference — scaffold, migrate, seed, queue, schedule, and more.',
     icon: '⌘',
   },
   {
-    title: 'Auth & JWT',
-    description: 'Session login, JWT for APIs, opaque tokens, policies, and role middleware.',
+    title: 'Auth & Authorization',
+    description: 'Session login, JWT, API tokens, policies, gates, and role middleware.',
     icon: '⛨',
+  },
+  {
+    title: 'Jobs & Scheduling',
+    description: 'Background queues with Redis workers, named jobs, and cron-style task scheduler.',
+    icon: '⏱',
   },
   {
     title: 'GraphQL',
@@ -31,7 +36,7 @@ export const features = [
   },
   {
     title: 'Real-time WebSockets',
-    description: 'Socket.io-style rooms and events with a TypeScript client — live chat and broadcasts.',
+    description: 'Socket.io-style rooms, Redis broadcast, and a TypeScript client.',
     icon: '⚡',
   },
   {

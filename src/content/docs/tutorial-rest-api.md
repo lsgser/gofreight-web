@@ -93,21 +93,43 @@ This registers:
 
 ## Step 5 — Return JSON from controllers
 
-A typical index handler loads records and writes JSON:
+Use `controller.Handler` and semantic status helpers:
 
 ```go
-func (c *PostsController) Index(w http.ResponseWriter, r *http.Request) {
-    posts, err := c.repo.All(r.Context())
+func (c PostController) Index(base controller.Base) error {
+    posts, err := models.Posts.Query(base.Request.Context()).Get()
     if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
+        return err
     }
-    w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(posts)
+    base.OK(posts)
+    return nil
+}
+
+func (c PostController) Store(base controller.Base) error {
+    // ... validate and save ...
+    base.Created(post)
+    return nil
+}
+
+func (c PostController) Destroy(base controller.Base) error {
+    // ... delete ...
+    base.NoContent()
+    return nil
 }
 ```
 
-Path parameters are available via `r.PathValue("id")`.
+Path parameters are available via `base.Param("id")`. Add numeric constraints on routes:
+
+```go
+router.BindModel(
+    r.Get("/posts/:id", controller.Handler(c.Show), "posts.show").
+        WhereParam("id", "[0-9]+"),
+    &models.Posts,
+    "id",
+)
+
+post, _ := controller.BoundAs[models.Post](&base, "id")
+```
 
 ## Step 6 — Add group middleware
 
@@ -170,4 +192,4 @@ curl -X DELETE http://localhost:5000/api/v1/posts/1
 
 - **[JWT Authentication](tutorial-auth-jwt.md)** — require Bearer tokens on protected routes
 - **[Testing](../docs/testing.md)** — write API tests with `gftest`
-- **[Routing](../docs/routing.md)** — full route group reference
+- **[Routing](../docs/routing.md)** — constraints, model binding, signed URLs, status codes
