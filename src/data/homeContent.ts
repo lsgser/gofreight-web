@@ -6,7 +6,7 @@ export const features = [
   },
   {
     title: 'ORM & Migrations',
-    description: 'Type-safe models, chainable queries, associations, and a migration runner built for Go.',
+    description: 'Type-safe models, chainable queries, migrations, and a full column type reference.',
     icon: '◫',
   },
   {
