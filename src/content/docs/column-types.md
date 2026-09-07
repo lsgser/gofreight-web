@@ -136,6 +136,10 @@ database.WriteMigrationPair("db/migrate", "004_create_comments", up, down)
 | `Integer(name)` / `IntegerColumn(name, opts...)` | `INTEGER` | Integers, foreign keys |
 | `Boolean(name)` / `BooleanColumn(name, opts...)` | `BOOLEAN` | Normalized per driver |
 | `DateTime(name)` / `DateTimeColumn(name, opts...)` | `TEXT` / `TIMESTAMP` | Datetimes stored as text on SQLite |
+| `Id()` | `INTEGER PRIMARY KEY` | Auto-increment id |
+| `Timestamps()` | `created_at`, `updated_at` | Laravel `$table->timestamps()` |
+| `SoftDeletes()` | `deleted_at` | Nullable timestamp — Laravel `$table->softDeletes()` |
+| `SoftDeletesTz()` | `deleted_at` | Nullable timestamptz on Postgres — Laravel `$table->softDeletesTz()` |
 | `DropColumn(name)` | — | Alter-table rollback helper |
 | `Index(columns...)` | — | Creates `CREATE INDEX IF NOT EXISTS ...` |
 | `UniqueIndex(columns...)` | — | Creates `CREATE UNIQUE INDEX IF NOT EXISTS ...` |
@@ -148,6 +152,9 @@ database.WriteMigrationPair("db/migrate", "004_create_comments", up, down)
 | `.Nullable()` / `database.ColNullable()` | nullable (default for blueprint columns) |
 | `.Default(v)` / `database.ColDefault(v)` | `DEFAULT v` |
 | `.Unique()` / `database.ColUnique()` | `UNIQUE` on the column |
+| `b.Timestamps()` | `created_at`, `updated_at` |
+| `b.SoftDeletes()` | nullable `deleted_at` (Laravel `$table->softDeletes()`) |
+| `b.SoftDeletesTz()` | nullable timezone-aware `deleted_at` (Laravel `$table->softDeletesTz()`) |
 
 ### Alter table
 
@@ -271,18 +278,24 @@ CREATE TABLE invoices (
 | `time` | Supported | `opens_at:time` | `opens_at TEXT` / `TIME` |
 | `datetime` | Supported | `published_at:datetime` | `published_at TEXT` / `TIMESTAMP` |
 | `timestamp` | Supported | Alias for `datetime` | Same as datetime |
-| `timestamps` | Auto | `CreateTableBlueprint` adds both | `created_at`, `updated_at` |
-| `softDeletes` | Supported | Manual column + `EnableSoftDelete()` | `deleted_at TEXT` |
+| `timestamps` | Auto | `b.Timestamps()` | `created_at`, `updated_at` |
+| `softDeletes` | Supported | `b.SoftDeletes()` | `deleted_at TEXT` (SQLite) / `TIMESTAMP` (Postgres/MySQL) |
+| `softDeletesTz` | Supported | `b.SoftDeletesTz()` | `deleted_at TIMESTAMPTZ` (Postgres) |
 | `year` | SQL only | — | `birth_year INTEGER CHECK (birth_year >= 1900)` |
 
 ```bash
 gofreight make:scaffold Event name:string starts_on:date opens_at:time published_at:datetime
 ```
 
-**Soft deletes** — add column in migration, enable on repository:
+**Soft deletes** — add the column in a migration, then enable on the repository:
 
-```sql
-ALTER TABLE posts ADD COLUMN deleted_at TEXT;
+```go
+database.SchemaCreate(ctx, "posts", func(b *database.Blueprint) {
+    b.Id()
+    b.String("title").NotNull()
+    b.SoftDeletes()    // or b.SoftDeletesTz() for timezone-aware deleted_at
+    b.Timestamps()
+})
 ```
 
 ```go

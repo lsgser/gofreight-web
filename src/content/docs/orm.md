@@ -315,22 +315,36 @@ Operations that receive the original `ctx` instead of `txCtx` run outside the tr
 
 ## Pagination
 
-Full pagination returns metadata (total count, page count):
+Full pagination returns metadata (total count, page count) like Laravel's `paginate()`:
 
 ```go
 page, err := Posts.Query(ctx).WhereEq("published", true).Paginate(1, 20)
-// page.Data       []Post
-// page.CurrentPage int
-// page.PerPage     int
-// page.Total       int64
-// page.LastPage    int
+page.SetLinks("/api/v1/posts") // first, prev, next, last URLs
+// page.Data, page.CurrentPage, page.PerPage, page.Total, page.LastPage, page.Links
 ```
 
-Simple pagination skips the count query (useful for infinite scroll):
+Simple pagination skips the count query (Laravel `simplePaginate()`):
 
 ```go
-posts, err := Posts.Query(ctx).SimplePaginate(2, 20)
+page, err := Posts.Query(ctx).SimplePaginate(2, 20)
+// page.Data, page.HasMorePages
 ```
+
+For JSON APIs, use `api.PaginatedResponse(baseURL, page, perPage, total, data)`.
+
+## Eloquent collections
+
+Query results can be wrapped in a Laravel-style collection:
+
+```go
+col, err := Posts.Query(ctx).WhereEq("published", true).GetCollection()
+col.Find(1)
+col.Filter(func(p Post) bool { return p.Views > 10 })
+col.Pluck("title")
+col.ModelKeys()
+```
+
+See [Laravel Eloquent Collections](https://laravel.com/docs/eloquent-collections) for the conceptual model — Gofreight's `model.Collection[T]` provides `Find`, `Filter`, `Map`, `Pluck`, `ModelKeys`, `Only`, and `Except`.
 
 ## Dirty tracking
 
