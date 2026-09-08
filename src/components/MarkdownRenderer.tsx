@@ -1,26 +1,25 @@
 import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Link } from 'react-router-dom'
 import { resolveImageSrc } from '../lib/assets'
+import { isInternalDocHref, normalizeDocLinks } from '../lib/docLinks'
 
 type Props = {
   content: string
 }
 
 function normalizeDocContent(content: string): string {
-  return content
-    .replace(
-      /<p align="center">\s*<img src="(?:assets\/)?([^"]+)"[^>]*>\s*<\/p>\n*/g,
-      (_, src: string) => `\n\n![Gofreight](${src.replace(/^assets\//, '')})\n\n`,
-    )
-    .replace(/<h1 align="center">([\s\S]*?)<\/h1>\n*/g, '# $1\n\n')
-    .replace(/<p align="center">\s*([\s\S]*?)\s*<\/p>\n*/g, (_, inner: string) => `${inner.trim()}\n\n`)
-    .replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g, '![Gofreight]($1)')
-    .replace(/\]\(\.\.\/README\.md\)/g, '](https://github.com/lsgser/gofreight)')
-    .replace(/\]\(([^)]+\.md)\)/g, (_, path: string) => {
-      const name = path.replace(/^.*\//, '').replace('.md', '')
-      return `](/docs/${name})`
-    })
+  return normalizeDocLinks(
+    content
+      .replace(
+        /<p align="center">\s*<img src="(?:assets\/)?([^"]+)"[^>]*>\s*<\/p>\n*/g,
+        (_, src: string) => `\n\n![Gofreight](${src.replace(/^assets\//, '')})\n\n`,
+      )
+      .replace(/<h1 align="center">([\s\S]*?)<\/h1>\n*/g, '# $1\n\n')
+      .replace(/<p align="center">\s*([\s\S]*?)\s*<\/p>\n*/g, (_, inner: string) => `${inner.trim()}\n\n`)
+      .replace(/!\[[^\]]*\]\(assets\/([^)]+)\)/g, '![Gofreight]($1)'),
+  )
 }
 
 export function MarkdownRenderer({ content }: Props) {
@@ -57,11 +56,27 @@ export function MarkdownRenderer({ content }: Props) {
         ul: ({ children }) => <ul className="doc-ul">{children}</ul>,
         ol: ({ children }) => <ol className="doc-ol">{children}</ol>,
         li: ({ children }) => <li className="doc-li">{children}</li>,
-        a: ({ href, children }) => (
-          <a href={href} className="doc-link" target={href?.startsWith('http') ? '_blank' : undefined} rel="noreferrer">
-            {children}
-          </a>
-        ),
+        a: ({ href, children }) => {
+          const url = href ?? ''
+          if (isInternalDocHref(url)) {
+            return (
+              <Link to={url} className="doc-link">
+                {children}
+              </Link>
+            )
+          }
+          const external = url.startsWith('http://') || url.startsWith('https://')
+          return (
+            <a
+              href={url || undefined}
+              className="doc-link"
+              target={external ? '_blank' : undefined}
+              rel={external ? 'noreferrer' : undefined}
+            >
+              {children}
+            </a>
+          )
+        },
         code: ({ className, children }) => {
           const isBlock = className?.includes('language-')
           if (isBlock) {
